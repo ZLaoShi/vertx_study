@@ -21,75 +21,68 @@ import io.vertx.ext.web.handler.graphql.instrumentation.JsonObjectAdapter;
 public class MainVerticle extends AbstractVerticle {
   private UserService userService;
 
-  @Override
+    @Override
     public void start(Promise<Void> startPromise) throws Exception {
-        // 在阻塞处理器中初始化 UserService
-        vertx.executeBlocking(() -> {
-            userService = new UserService();
-            return null;
-        }, result -> {
-            if (result.succeeded()) {
-                setupRouter(startPromise);
-            } else {
-                startPromise.fail(result.cause());
-            }
-        });
-    }
-    
-    private void setupRouter(Promise<Void> startPromise) {
-        Router router = Router.router(vertx);
-        
-        // 1. 配置 BodyHandler（必需）
-        router.route().handler(BodyHandler.create());
-        
-        // 2. 配置 GraphQL Handler
-        GraphQL graphQL = setupGraphQL();
-        router.route("/graphql").handler(
-            GraphQLHandler.create(graphQL, new GraphQLHandlerOptions()
-                .setRequestBatchingEnabled(true))
-        );
-        
-        // 3. 配置 GraphiQL Handler
-        router.route("/graphiql/*").handler(
-            GraphiQLHandler.create(vertx, new GraphiQLHandlerOptions()
-                .setEnabled(true)
-                .setGraphQLUri("/graphql"))
-        );
-        
-        // 4. 启动服务器
-        vertx.createHttpServer()
-            .requestHandler(router)
-            .listen(8888)
-            .onSuccess(server -> {
-                System.out.println("HTTP server started on port " + server.actualPort());
-                startPromise.complete();
+        // 1. 异步读取 schema 文件
+        vertx.fileSystem().readFile("schema.graphqls")
+            .compose(buffer -> {
+                // 2. 异步初始化 UserService
+                return vertx.executeBlocking(() -> {
+                    userService = new UserService();
+                    
+                    // 3. 设置 GraphQL
+                    String schema = buffer.toString();
+                    SchemaParser schemaParser = new SchemaParser();
+                    TypeDefinitionRegistry typeDefinitionRegistry = schemaParser.parse(schema);
+                    
+                    RuntimeWiring runtimeWiring = RuntimeWiring.newRuntimeWiring()
+                        .type("Query", builder ->
+                            builder.dataFetcher("user", environment -> {
+                                String idStr = environment.getArgument("id");
+                                Integer id = Integer.parseInt(idStr);
+                                return userService.findById(id)
+                                    .subscribeAsCompletionStage();
+                            })
+                        )
+                        .build();
+
+                    SchemaGenerator schemaGenerator = new SchemaGenerator();
+                    GraphQLSchema graphQLSchema = schemaGenerator.makeExecutableSchema(
+                        typeDefinitionRegistry, 
+                        runtimeWiring
+                    );
+
+                    return GraphQL.newGraphQL(graphQLSchema)
+                        .instrumentation(new JsonObjectAdapter())
+                        .build();
+                });
+            })
+            .onSuccess(graphQL -> {
+                // 4. 设置路由
+                Router router = Router.router(vertx);
+                router.route().handler(BodyHandler.create());
+                
+                router.route("/graphql").handler(
+                    GraphQLHandler.create(graphQL, new GraphQLHandlerOptions()
+                        .setRequestBatchingEnabled(true))
+                );
+                
+                router.route("/graphiql/*").handler(
+                    GraphiQLHandler.create(vertx, new GraphiQLHandlerOptions()
+                        .setEnabled(true)
+                        .setGraphQLUri("/graphql"))
+                );
+                
+                // 5. 启动服务器
+                vertx.createHttpServer()
+                    .requestHandler(router)
+                    .listen(8888)
+                    .onSuccess(server -> {
+                        System.out.println("HTTP server started on port " + server.actualPort());
+                        startPromise.complete();
+                    })
+                    .onFailure(startPromise::fail);
             })
             .onFailure(startPromise::fail);
     }
-
-  private GraphQL setupGraphQL() {
-    String schema = vertx.fileSystem().readFileBlocking("schema.graphqls").toString();
-
-    SchemaParser schemaParser = new SchemaParser();
-    TypeDefinitionRegistry typeDefinitionRegistry = schemaParser.parse(schema);
-
-    RuntimeWiring runtimeWiring = RuntimeWiring.newRuntimeWiring()
-    .type("Query", builder ->
-        builder.dataFetcher("user", environment -> {
-            String idStr = environment.getArgument("id");
-            Integer id = Integer.parseInt(idStr);
-
-            return userService.findById(id)
-                .subscribeAsCompletionStage();
-        })
-    )
-    .build();
-
-    SchemaGenerator schemaGenerator = new SchemaGenerator();
-    GraphQLSchema graphQLSchema = schemaGenerator.makeExecutableSchema(typeDefinitionRegistry, runtimeWiring);
-
-    return GraphQL.newGraphQL(graphQLSchema)
-    .instrumentation(new JsonObjectAdapter())
-    .build();
-  }
 }

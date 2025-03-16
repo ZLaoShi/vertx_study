@@ -1,11 +1,7 @@
 package com.example.starter.service;
 
 import com.example.starter.model.User;
-// import org.hibernate.reactive.mutiny.Mutiny;
-// import org.hibernate.reactive.mutiny.Mutiny.SessionFactory;
-
 import io.smallrye.mutiny.Uni;
-
 import static jakarta.persistence.Persistence.createEntityManagerFactory;
 import static org.hibernate.reactive.mutiny.Mutiny.SessionFactory;
 
