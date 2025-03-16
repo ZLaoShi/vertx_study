@@ -27,7 +27,7 @@
             <!-- <property name="hibernate.reactive" value="true"/> -->
 
             <!-- 数据库schema生成策略 -->
-            <property name="javax.persistence.schema-generation.database.action" value="drop-and-create"/>
+            <property name="javax.persistence.schema-generation.database.action" value="update"/>
         </properties>
     </persistence-unit>
 </persistence>
