@@ -1,0 +1,15 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Debug Vert.x Application",
+            "request": "launch",
+            "mainClass": "com.example.starter.Main",
+            "projectName": "starter",
+            "env": {
+                "DEBUG": "true"
+            }
+        }
+    ]
+}
