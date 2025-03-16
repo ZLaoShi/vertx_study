@@ -1,5 +1,8 @@
 package com.example.starter;
 
+import java.util.Map;
+
+import com.example.starter.model.User;
 import com.example.starter.service.UserService;
 
 import graphql.GraphQL;
@@ -48,11 +51,40 @@ public class MainVerticle extends AbstractVerticle {
                 
                 RuntimeWiring runtimeWiring = RuntimeWiring.newRuntimeWiring()
                     .type("Query", builder ->
-                        builder.dataFetcher("user", env -> {
-                            Integer id = Integer.parseInt(env.getArgument("id"));
-                            return userService.findById(id)
-                                .subscribeAsCompletionStage();
-                        })
+                        builder
+                            .dataFetcher("user", env -> {
+                                Integer id = Integer.parseInt(env.getArgument("id"));
+                                return userService.findById(id)
+                                    .subscribeAsCompletionStage();
+                            })
+                            .dataFetcher("users", env -> 
+                                userService.findAll()
+                                    .subscribeAsCompletionStage())
+                    )
+                    .type("Mutation", builder ->
+                        builder
+                            .dataFetcher("createUser", env -> {
+                                Map<String, Object> input = env.getArgument("input");
+                                User user = new User();
+                                user.setName((String) input.get("name"));
+                                user.setEmail((String) input.get("email"));
+                                return userService.createUser(user)
+                                    .subscribeAsCompletionStage();
+                            })
+                            .dataFetcher("updateUser", env -> {
+                                Integer id = Integer.parseInt(env.getArgument("id"));
+                                Map<String, Object> input = env.getArgument("input");
+                                User user = new User();
+                                user.setName((String) input.get("name"));
+                                user.setEmail((String) input.get("email"));
+                                return userService.updateUser(id, user)
+                                    .subscribeAsCompletionStage();
+                            })
+                            .dataFetcher("deleteUser", env -> {
+                                Integer id = Integer.parseInt(env.getArgument("id"));
+                                return userService.deleteUser(id)
+                                    .subscribeAsCompletionStage();
+                            })
                     )
                     .build();
 
