@@ -1,8 +1,5 @@
 package com.example.starter;
 
-import java.util.Map;
-
-import com.example.starter.model.User;
 import com.example.starter.service.UserService;
 import com.example.starter.graphql.UserFetcher;
 
@@ -56,39 +53,13 @@ public class MainVerticle extends AbstractVerticle {
                     .type("Query", builder ->
                         builder
                             .dataFetcher("user", userFetcher.getUserById())
-                            .dataFetcher("users", env -> {
-                                int page = env.getArgumentOrDefault("page", 1);
-                                int size = env.getArgumentOrDefault("size", 10);
-                                String orderBy = env.getArgumentOrDefault("orderBy", "id");
-                                System.out.println("分页查询成功");
-                                return userService.findAllPaged(page, size, orderBy)
-                                    .subscribeAsCompletionStage();
-                            })
+                            .dataFetcher("users", userFetcher.getUsers())
                     )
                     .type("Mutation", builder ->
                         builder
-                            .dataFetcher("createUser", env -> {
-                                Map<String, Object> input = env.getArgument("input");
-                                User user = new User();
-                                user.setName((String) input.get("name"));
-                                user.setEmail((String) input.get("email"));
-                                return userService.createUser(user)
-                                    .subscribeAsCompletionStage();
-                            })
-                            .dataFetcher("updateUser", env -> {
-                                Integer id = Integer.parseInt(env.getArgument("id"));
-                                Map<String, Object> input = env.getArgument("input");
-                                User user = new User();
-                                user.setName((String) input.get("name"));
-                                user.setEmail((String) input.get("email"));
-                                return userService.updateUser(id, user)
-                                    .subscribeAsCompletionStage();
-                            })
-                            .dataFetcher("deleteUser", env -> {
-                                Integer id = Integer.parseInt(env.getArgument("id"));
-                                return userService.deleteUser(id)
-                                    .subscribeAsCompletionStage();
-                            })
+                            .dataFetcher("createUser", userFetcher.createUser())
+                            .dataFetcher("updateUser", userFetcher.updateUser())
+                            .dataFetcher("deleteUser", userFetcher.deleteUser())
 
                     )
                     .build();

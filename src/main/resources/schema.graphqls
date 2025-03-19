@@ -1,6 +1,6 @@
 type Query {
   user(id: ID!): User
-  users: [User]
+  users(page: Int = 1, size: Int = 10, orderBy:String = "id"): UsersPage
 }
 
 type Mutation {
@@ -13,6 +13,19 @@ type User {
   id: ID!
   name: String!
   email: String
+}
+
+type UsersPage {
+  content: [User]!
+  pageInfo: PageInfo!
+}
+
+type PageInfo {
+  currentPage: Int!
+  pageSize: Int!
+  totalPages: Int!
+  totalElements: Int!
+  hasNext: Boolean!
 }
 
 input UserInput {
