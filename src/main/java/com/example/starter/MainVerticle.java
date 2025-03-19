@@ -4,6 +4,7 @@ import java.util.Map;
 
 import com.example.starter.model.User;
 import com.example.starter.service.UserService;
+import com.example.starter.graphql.UserFetcher;
 
 import graphql.GraphQL;
 import graphql.schema.GraphQLSchema;
@@ -48,18 +49,21 @@ public class MainVerticle extends AbstractVerticle {
                 String schema = buffer.toString();
                 SchemaParser schemaParser = new SchemaParser();
                 TypeDefinitionRegistry typeRegistry = schemaParser.parse(schema);
-                
+
+                UserFetcher userFetcher = new UserFetcher(userService);
+
                 RuntimeWiring runtimeWiring = RuntimeWiring.newRuntimeWiring()
                     .type("Query", builder ->
                         builder
-                            .dataFetcher("user", env -> {
-                                Integer id = Integer.parseInt(env.getArgument("id"));
-                                return userService.findById(id)
+                            .dataFetcher("user", userFetcher.getUserById())
+                            .dataFetcher("users", env -> {
+                                int page = env.getArgumentOrDefault("page", 1);
+                                int size = env.getArgumentOrDefault("size", 10);
+                                String orderBy = env.getArgumentOrDefault("orderBy", "id");
+                                System.out.println("分页查询成功");
+                                return userService.findAllPaged(page, size, orderBy)
                                     .subscribeAsCompletionStage();
                             })
-                            .dataFetcher("users", env -> 
-                                userService.findAll()
-                                    .subscribeAsCompletionStage())
                     )
                     .type("Mutation", builder ->
                         builder
@@ -85,6 +89,7 @@ public class MainVerticle extends AbstractVerticle {
                                 return userService.deleteUser(id)
                                     .subscribeAsCompletionStage();
                             })
+
                     )
                     .build();
 
@@ -123,4 +128,3 @@ public class MainVerticle extends AbstractVerticle {
             });
     }
 }
- 
