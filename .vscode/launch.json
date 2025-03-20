@@ -3,6 +3,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "Main",
+            "request": "launch",
+            "mainClass": "org.mxwj.librarymanagement.Main",
+            "projectName": "starter"
+        },
+        {
+            "type": "java",
             "name": "Debug Vert.x Application",
             "request": "launch",
             "mainClass": "com.example.librarymanagement.Main",

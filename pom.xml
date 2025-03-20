@@ -39,6 +39,13 @@
 
   <dependencies>
 
+  <!-- jbcrypt -->
+  <dependency>
+      <groupId>org.mindrot</groupId>
+      <artifactId>jbcrypt</artifactId>
+      <version>0.4</version>
+  </dependency>
+
     <!-- Vert.x Redis Client -->
     <dependency>
         <groupId>io.vertx</groupId>

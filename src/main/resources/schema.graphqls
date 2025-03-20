@@ -7,6 +7,28 @@ type Mutation {
   createUser(input: UserInput!): User
   updateUser(id: ID!, input: UserInput!): User
   deleteUser(id: ID!): Boolean
+  login(username: String!, password: String!): LoginResponse
+  register(input: AccountInput!): Account
+}
+
+type LoginResponse {
+    token: String!
+    account: Account!
+}
+
+type Account {
+    id: ID!
+    username: String!
+    email: String
+    createdAt: String
+    lastLogin: String
+    status: Int
+}
+
+input AccountInput {
+    username: String!
+    password: String!
+    email: String!
 }
 
 type User {

@@ -3,19 +3,18 @@ package org.mxwj.librarymanagement.service;
 import io.smallrye.mutiny.Uni;
 
 import org.hibernate.reactive.mutiny.Mutiny;
+import org.mxwj.librarymanagement.lib.DatabaseManager;
 import org.mxwj.librarymanagement.model.PageInfo;
 import org.mxwj.librarymanagement.model.User;
 import org.mxwj.librarymanagement.model.UsersPage;
 
 import java.util.List;
-import static jakarta.persistence.Persistence.createEntityManagerFactory;
 
 public class UserService {
     private final Mutiny.SessionFactory factory;
-
+    
     public UserService() {
-        factory = createEntityManagerFactory("pg-vertx-study")
-                .unwrap(Mutiny.SessionFactory.class);
+        factory = DatabaseManager.getSessionFactory();
     }
 
     public Uni<User> findById(Integer id) {

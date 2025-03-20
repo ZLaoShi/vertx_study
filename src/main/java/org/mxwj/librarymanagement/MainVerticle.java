@@ -1,6 +1,7 @@
 package org.mxwj.librarymanagement;
 
 import org.mxwj.librarymanagement.graphql.UserFetcher;
+import org.mxwj.librarymanagement.service.AccountService;
 import org.mxwj.librarymanagement.service.UserService;
 
 import graphql.GraphQL;
@@ -22,6 +23,7 @@ import io.vertx.ext.web.handler.graphql.instrumentation.JsonObjectAdapter;
 
 public class MainVerticle extends AbstractVerticle {
     private UserService userService;
+    private AccountService accountService;
 
     @Override
     public void start(Promise<Void> startPromise) {
@@ -35,6 +37,7 @@ public class MainVerticle extends AbstractVerticle {
     private Future<Void> initializeUserService() {
         return vertx.executeBlocking(() -> {
             userService = new UserService();
+           // accountService = new AccountService();
             return null;
         });
     }
@@ -47,7 +50,9 @@ public class MainVerticle extends AbstractVerticle {
                 SchemaParser schemaParser = new SchemaParser();
                 TypeDefinitionRegistry typeRegistry = schemaParser.parse(schema);
 
+                // 创建 Fetcher
                 UserFetcher userFetcher = new UserFetcher(userService);
+                // AuthFetcher authFetcher = new AuthFetcher(accountService);
 
                 RuntimeWiring runtimeWiring = RuntimeWiring.newRuntimeWiring()
                     .type("Query", builder ->
@@ -60,7 +65,8 @@ public class MainVerticle extends AbstractVerticle {
                             .dataFetcher("createUser", userFetcher.createUser())
                             .dataFetcher("updateUser", userFetcher.updateUser())
                             .dataFetcher("deleteUser", userFetcher.deleteUser())
-
+                            //.dataFetcher("login", authFetcher.login())
+                            // .dataFetcher("register", authFetcher.register())
                     )
                     .build();
 
