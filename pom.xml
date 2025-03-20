@@ -39,6 +39,27 @@
 
   <dependencies>
 
+    <!-- Vert.x Redis Client -->
+    <dependency>
+        <groupId>io.vertx</groupId>
+        <artifactId>vertx-redis-client</artifactId>
+        <version>${vertx.version}</version>
+    </dependency>
+
+    <!-- Vert.x Auth JWT -->
+    <dependency>
+        <groupId>io.vertx</groupId>
+        <artifactId>vertx-auth-jwt</artifactId>
+        <version>${vertx.version}</version>
+    </dependency>
+
+    <!-- Vert.x Config -->
+    <dependency>
+        <groupId>io.vertx</groupId>
+        <artifactId>vertx-config</artifactId>
+        <version>${vertx.version}</version>
+    </dependency>
+
     <!-- 添加这些 SCRAM 认证依赖 -->
     <dependency>
         <groupId>com.ongres.scram</groupId>

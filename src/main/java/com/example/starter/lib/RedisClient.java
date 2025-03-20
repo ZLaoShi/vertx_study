@@ -5,12 +5,11 @@ import io.vertx.core.Vertx;
 import io.vertx.redis.client.*;
 
 public class RedisClient {
-    private static RedisClient instance;
     private final Redis redis;
     private RedisConnection connection;
+    private RedisAPI redisAPI;
 
-    // 私有构造函数
-    private RedisClient(Vertx vertx) {
+    public RedisClient(Vertx vertx) {
         this.redis = Redis.createClient(
             vertx,
             new RedisOptions()
@@ -19,29 +18,24 @@ public class RedisClient {
         );
     }
 
-    // 单例获取方法
-    public static synchronized RedisClient getInstance(Vertx vertx) {
-        if (instance == null) {
-            instance = new RedisClient(vertx);
-        }
-        return instance;
-    }
-
-    // 获取Redis连接
-    public Future<RedisConnection> getRedis() {
-        if (connection != null) {
-            return Future.succeededFuture(connection);
+    public Future<RedisAPI> getRedisAPI() {
+        if (redisAPI != null && connection != null) {
+            return Future.succeededFuture(redisAPI);
         }
 
         return redis.connect()
             .onSuccess(conn -> {
                 this.connection = conn;
+                this.redisAPI = RedisAPI.api(conn);
                 
-                // 设置连接关闭或错误的处理
                 conn.exceptionHandler(err -> {
                     System.err.println("Redis connection error: " + err.getMessage());
                     this.connection = null;
+                    this.redisAPI = null;
                 });
-            });
+            })
+            .map(conn -> redisAPI);
     }
 }
+
+
