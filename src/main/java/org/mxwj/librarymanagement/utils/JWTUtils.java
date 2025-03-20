@@ -68,9 +68,27 @@ public class JWTUtils {
         );
     }
 
-    public Future<Void> revokeToken(String userId) {
-        return redisClient.getRedisAPI()
-            .compose(redis -> redis.del(Arrays.asList("token:" + userId)))
-            .map(res -> null);
+    public Future<Void> revokeToken(String token) {
+        TokenCredentials credentials = new TokenCredentials(token);
+    
+        return Future.future(promise ->
+            jwtAuth.authenticate(credentials)
+                .onSuccess(user -> {
+                    String userId = user.principal().getString("sub");
+                    // 删除 Redis 中的 token
+                    redisClient.getRedisAPI()
+                        .compose(redis -> redis.del(Arrays.asList("token:" + userId)))
+                        .onSuccess(res -> promise.complete())
+                        .onFailure(err -> {
+                            System.err.println("删除token失败: " + err.getMessage());
+                            promise.fail(err);
+                        });
+                })
+                .onFailure(err -> {
+                    System.err.println("token验证失败: " + err.getMessage());
+                    promise.fail(err);
+                })
+        );
     }
+
 }

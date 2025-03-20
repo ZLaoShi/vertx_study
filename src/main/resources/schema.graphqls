@@ -9,11 +9,13 @@ type Mutation {
   deleteUser(id: ID!): Boolean
   login(username: String!, password: String!): LoginResponse
   register(input: AccountInput!): Account
+  logout(token: String!): Boolean 
 }
 
 type LoginResponse {
     token: String!
-    account: Account!
+    username: String!
+    userType: Int!
 }
 
 type Account {

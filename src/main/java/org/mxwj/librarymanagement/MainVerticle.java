@@ -1,5 +1,6 @@
 package org.mxwj.librarymanagement;
 
+import org.mxwj.librarymanagement.graphql.AuthFetcher;
 import org.mxwj.librarymanagement.graphql.UserFetcher;
 import org.mxwj.librarymanagement.service.AccountService;
 import org.mxwj.librarymanagement.service.UserService;
@@ -37,7 +38,7 @@ public class MainVerticle extends AbstractVerticle {
     private Future<Void> initializeUserService() {
         return vertx.executeBlocking(() -> {
             userService = new UserService();
-           // accountService = new AccountService();
+            accountService = new AccountService(vertx);
             return null;
         });
     }
@@ -52,7 +53,7 @@ public class MainVerticle extends AbstractVerticle {
 
                 // 创建 Fetcher
                 UserFetcher userFetcher = new UserFetcher(userService);
-                // AuthFetcher authFetcher = new AuthFetcher(accountService);
+                AuthFetcher authFetcher = new AuthFetcher(accountService);
 
                 RuntimeWiring runtimeWiring = RuntimeWiring.newRuntimeWiring()
                     .type("Query", builder ->
@@ -65,8 +66,9 @@ public class MainVerticle extends AbstractVerticle {
                             .dataFetcher("createUser", userFetcher.createUser())
                             .dataFetcher("updateUser", userFetcher.updateUser())
                             .dataFetcher("deleteUser", userFetcher.deleteUser())
-                            //.dataFetcher("login", authFetcher.login())
-                            // .dataFetcher("register", authFetcher.register())
+                            .dataFetcher("login", authFetcher.login())
+                            .dataFetcher("register", authFetcher.register())
+                            .dataFetcher("logout", authFetcher.logout())
                     )
                     .build();
 
