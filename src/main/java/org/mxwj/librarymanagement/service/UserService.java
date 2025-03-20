@@ -1,11 +1,12 @@
-package com.example.starter.service;
-
-import com.example.starter.model.PageInfo;
-import com.example.starter.model.User;
-import com.example.starter.model.UsersPage;
+package org.mxwj.librarymanagement.service;
 
 import io.smallrye.mutiny.Uni;
+
 import org.hibernate.reactive.mutiny.Mutiny;
+import org.mxwj.librarymanagement.model.PageInfo;
+import org.mxwj.librarymanagement.model.User;
+import org.mxwj.librarymanagement.model.UsersPage;
+
 import java.util.List;
 import static jakarta.persistence.Persistence.createEntityManagerFactory;
 

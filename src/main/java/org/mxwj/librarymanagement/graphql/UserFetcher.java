@@ -1,12 +1,13 @@
-package com.example.starter.graphql;
+package org.mxwj.librarymanagement.graphql;
 
-import com.example.starter.model.User;
-import com.example.starter.model.UsersPage;
-import com.example.starter.service.UserService;
 import graphql.schema.DataFetcher;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+
+import org.mxwj.librarymanagement.model.User;
+import org.mxwj.librarymanagement.model.UsersPage;
+import org.mxwj.librarymanagement.service.UserService;
 
 public class UserFetcher {
     private final UserService userService;

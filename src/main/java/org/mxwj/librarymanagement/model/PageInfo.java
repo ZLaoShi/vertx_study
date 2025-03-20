@@ -1,4 +1,4 @@
-package com.example.starter.model;
+package org.mxwj.librarymanagement.model;
 
 import lombok.Builder;
 import lombok.Data;

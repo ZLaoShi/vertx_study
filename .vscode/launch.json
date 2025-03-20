@@ -5,8 +5,8 @@
             "type": "java",
             "name": "Debug Vert.x Application",
             "request": "launch",
-            "mainClass": "com.example.starter.Main",
-            "projectName": "starter",
+            "mainClass": "com.example.librarymanagement.Main",
+            "projectName": "librarymanagement",
             "env": {
                 "DEBUG": "true"
             }

@@ -1,4 +1,4 @@
-package com.example.starter.lib;
+package org.mxwj.librarymanagement.lib;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;

@@ -7,7 +7,7 @@
     <persistence-unit name="pg-vertx-study">
         <provider>org.hibernate.reactive.provider.ReactivePersistenceProvider</provider>
         
-        <class>com.example.starter.model.User</class>
+        <class>com.example.librarymanagement.model.User</class>
         
         <properties>
             <!-- Vert.x PostgreSQL 连接配置 -->

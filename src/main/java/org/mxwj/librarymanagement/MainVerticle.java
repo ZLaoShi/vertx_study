@@ -1,7 +1,7 @@
-package com.example.starter;
+package org.mxwj.librarymanagement;
 
-import com.example.starter.service.UserService;
-import com.example.starter.graphql.UserFetcher;
+import org.mxwj.librarymanagement.graphql.UserFetcher;
+import org.mxwj.librarymanagement.service.UserService;
 
 import graphql.GraphQL;
 import graphql.schema.GraphQLSchema;
