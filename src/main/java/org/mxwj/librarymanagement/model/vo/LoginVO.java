@@ -11,5 +11,4 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public class LoginVO {
     private String token;
     private String username;
-    private Short userType;
 }

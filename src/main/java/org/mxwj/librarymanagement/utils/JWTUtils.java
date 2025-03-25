@@ -30,10 +30,11 @@ public class JWTUtils {
         this.redisClient = new RedisClient(vertx);
     }
     
-    public Future<String> generateToken(String userId) {
+    public Future<String> generateToken(String userId, String role) {
         String token = jwtAuth.generateToken(
             new JsonObject()
-                .put("sub", userId),
+                .put("sub", userId)
+                .put("role", role),
             new JWTOptions()
                 .setExpiresInSeconds(TOKEN_EXPIRES)
         );

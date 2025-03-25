@@ -45,14 +45,13 @@ public class AccountService {
                     return session.merge(account)
                         .call(session::flush)
                         .chain(() -> {
-                            Future<String> tokenFuture = jwtUtils.generateToken(account.getId().toString());
+                            Future<String> tokenFuture = jwtUtils.generateToken(account.getId().toString(), account.getUserType().toString());
                             // 将 Vert.x Future 转换为 Mutiny Uni
                             return Uni.createFrom().completionStage(tokenFuture.toCompletionStage());
                         })
                         .map(token -> LoginVO.builder()
                             .token(token)
                             .username(account.getUsername())
-                            .userType(account.getUserType())  
                             .build());
                 });
         });

@@ -2,7 +2,9 @@ package org.mxwj.librarymanagement;
 
 import org.mxwj.librarymanagement.graphql.AuthFetcher;
 import org.mxwj.librarymanagement.graphql.UserFetcher;
+import org.mxwj.librarymanagement.graphql.UserInfoFetcher;
 import org.mxwj.librarymanagement.service.AccountService;
+import org.mxwj.librarymanagement.service.UserInfoService;
 import org.mxwj.librarymanagement.service.UserService;
 
 import graphql.GraphQL;
@@ -25,6 +27,7 @@ import io.vertx.ext.web.handler.graphql.instrumentation.JsonObjectAdapter;
 public class MainVerticle extends AbstractVerticle {
     private UserService userService;
     private AccountService accountService;
+    private UserInfoService userInfoService;
 
     @Override
     public void start(Promise<Void> startPromise) {
@@ -39,6 +42,7 @@ public class MainVerticle extends AbstractVerticle {
         return vertx.executeBlocking(() -> {
             userService = new UserService();
             accountService = new AccountService(vertx);
+            userInfoService = new UserInfoService();
             return null;
         });
     }
@@ -54,18 +58,17 @@ public class MainVerticle extends AbstractVerticle {
                 // 创建 Fetcher
                 UserFetcher userFetcher = new UserFetcher(userService);
                 AuthFetcher authFetcher = new AuthFetcher(accountService);
+                UserInfoFetcher userInfoFetcher = new UserInfoFetcher(userInfoService);
 
                 RuntimeWiring runtimeWiring = RuntimeWiring.newRuntimeWiring()
                     .type("Query", builder ->
                         builder
                             .dataFetcher("user", userFetcher.getUserById())
                             .dataFetcher("users", userFetcher.getUsers())
+                            .dataFetcher("userInfo", userInfoFetcher.getUserInfoById())
                     )
                     .type("Mutation", builder ->
                         builder
-                            .dataFetcher("createUser", userFetcher.createUser())
-                            .dataFetcher("updateUser", userFetcher.updateUser())
-                            .dataFetcher("deleteUser", userFetcher.deleteUser())
                             .dataFetcher("login", authFetcher.login())
                             .dataFetcher("register", authFetcher.register())
                             .dataFetcher("logout", authFetcher.logout())

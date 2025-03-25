@@ -21,7 +21,7 @@
 
     <lombok.version>1.18.30</lombok.version>
 
-    <main.verticle>com.example.librarymanagement.MainVerticle</main.verticle>
+    <main.verticle>org.mxwj.librarymanagement.MainVerticle</main.verticle>
     <launcher.class>io.vertx.core.Launcher</launcher.class>
   </properties>
 
@@ -155,7 +155,7 @@
     </plugin>
 
       <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
+         <artifactId>maven-shade-plugin</artifactId>
         <version>${maven-compiler-plugin.version}</version>
         <configuration>
           <release>17</release>

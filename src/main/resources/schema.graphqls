@@ -1,36 +1,59 @@
 type Query {
   user(id: ID!): User
   users(page: Int = 1, size: Int = 10, orderBy:String = "id"): UsersPage
+  userInfo(id: ID!): UserInfo
 }
 
 type Mutation {
   createUser(input: UserInput!): User
   updateUser(id: ID!, input: UserInput!): User
   deleteUser(id: ID!): Boolean
+  createUserInfo(input: UserInfoInput!): UserInfo
   login(username: String!, password: String!): LoginResponse
   register(input: AccountInput!): Account
   logout(token: String!): Boolean 
 }
 
 type LoginResponse {
-    token: String!
-    username: String!
-    userType: Int!
+ token: String!
+ username: String!
 }
 
 type Account {
-    id: ID!
-    username: String!
-    email: String
-    createdAt: String
-    lastLogin: String
-    status: Int
+ id: ID!
+ username: String!
+ email: String
+ createdAt: String
+ lastLogin: String
+ status: Int
 }
 
 input AccountInput {
-    username: String!
-    password: String!
-    email: String!
+ username: String!
+ password: String!
+ email: String!
+}
+
+type AccountPage {
+ content: [Account]!
+ pageInfo: PageInfo!
+}
+
+type UserInfo {
+ id: ID!
+ fullName: String!
+ phone: String
+ address: String
+ maxBorrowBooks: Int
+ createdAt: String
+ updatedAt: String
+}
+
+input UserInfoInput {
+ fullname: String!
+ phone: String
+ address: String
+ maxBorrowBooks: Int
 }
 
 type User {
