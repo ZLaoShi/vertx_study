@@ -7,6 +7,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.JWTOptions;
 import io.vertx.ext.auth.PubSecKeyOptions;
+import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.authentication.TokenCredentials;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
@@ -45,27 +46,27 @@ public class JWTUtils {
             .map(res -> token));
     }
 
-    public Future<Boolean> validateToken(String token) {
+    public Future<User> validateToken(String token) {
         TokenCredentials credentials = new TokenCredentials(token);
-
-        return Future.future(promise ->
+    
+        return Future.future(promise -> 
             jwtAuth.authenticate(credentials)
                 .onSuccess(user -> {
                     String userId = user.principal().getString("sub");
 
                     // 检查Redis中是否存在该token
                     redisClient.getRedisAPI()
-                    .compose(redis -> redis.get("token:" + userId))
+                        .compose(redis -> redis.get("token:" + userId))
                         .onSuccess(storedToken -> {
                             if (token.equals(storedToken.toString())) {
-                                promise.complete(true);
+                                promise.complete(user);
                             } else {
-                                promise.complete(false);
+                                promise.fail("Invalid token");
                             }
                         })
-                        .onFailure(err -> promise.complete(false));
+                        .onFailure(err -> promise.fail(err));
                 })
-                .onFailure(err -> promise.complete(false))
+                .onFailure(err -> promise.fail(err))
         );
     }
 

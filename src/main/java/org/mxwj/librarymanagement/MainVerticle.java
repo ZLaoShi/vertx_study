@@ -1,11 +1,17 @@
 package org.mxwj.librarymanagement;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+
 import org.mxwj.librarymanagement.graphql.AuthFetcher;
 import org.mxwj.librarymanagement.graphql.UserFetcher;
 import org.mxwj.librarymanagement.graphql.UserInfoFetcher;
+import org.mxwj.librarymanagement.middleware.GraphQLAuthHandler;
 import org.mxwj.librarymanagement.service.AccountService;
 import org.mxwj.librarymanagement.service.UserInfoService;
 import org.mxwj.librarymanagement.service.UserService;
+import org.mxwj.librarymanagement.utils.JWTUtils;
 
 import graphql.GraphQL;
 import graphql.schema.GraphQLSchema;
@@ -55,7 +61,7 @@ public class MainVerticle extends AbstractVerticle {
                 SchemaParser schemaParser = new SchemaParser();
                 TypeDefinitionRegistry typeRegistry = schemaParser.parse(schema);
 
-                // 创建 Fetcher
+            
                 UserFetcher userFetcher = new UserFetcher(userService);
                 AuthFetcher authFetcher = new AuthFetcher(accountService);
                 UserInfoFetcher userInfoFetcher = new UserInfoFetcher(userInfoService);
@@ -63,7 +69,7 @@ public class MainVerticle extends AbstractVerticle {
                 RuntimeWiring runtimeWiring = RuntimeWiring.newRuntimeWiring()
                     .type("Query", builder ->
                         builder
-                            .dataFetcher("user", userFetcher.getUserById())
+                            .dataFetcher("user", GraphQLAuthHandler.requireUser(userFetcher.getUserById()))
                             .dataFetcher("users", userFetcher.getUsers())
                             .dataFetcher("userInfo", userInfoFetcher.getUserInfoById())
                     )
@@ -87,20 +93,47 @@ public class MainVerticle extends AbstractVerticle {
     private Future<Void> setupRouter(GraphQL graphQL) {
         Router router = Router.router(vertx);
         router.route().handler(BodyHandler.create());
+        JWTUtils jwtUtils = new JWTUtils(vertx);
+
+        //鉴权
+        router.route("/graphql").handler(context -> {
+            String authHeader = context.request().getHeader("Authorization");
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String token = authHeader.substring(7);
+                
+                jwtUtils.validateToken(token)
+                    .onSuccess(user -> {
+                        // 将用户信息存储在 RoutingContext 中
+                        context.put("userPrincipal", user.principal());
+                        
+                        System.out.printf("Current Date and Time (UTC): %s%n",
+                            LocalDateTime.now(ZoneOffset.UTC).format(
+                                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+                            ));
+                        System.out.printf("Current User's Login: %s%n", 
+                            user.principal().getString("sub"));
+                        
+                        context.next();
+                    })
+                    .onFailure(err -> context.fail(401));
+            } else {
+                context.next();
+            }
+        });
         
-        router.route("/graphql").handler(
-            GraphQLHandler.create(graphQL, 
-                new GraphQLHandlerOptions()
-                    .setRequestBatchingEnabled(true))
-        );
-        
+        GraphQLHandler graphQLHandler = GraphQLHandler.create(graphQL, 
+            new GraphQLHandlerOptions()
+                .setRequestBatchingEnabled(true));
+
+        router.route("/graphql").handler(graphQLHandler);
+
         router.route("/graphiql/*").handler(
-            GraphiQLHandler.create(vertx, 
+            GraphiQLHandler.create(vertx,
                 new GraphiQLHandlerOptions()
                     .setEnabled(true)
                     .setGraphQLUri("/graphql"))
         );
-        
+
         return vertx.createHttpServer()
             .requestHandler(router)
             .listen(8888)

@@ -37,7 +37,7 @@ public class AuthFetcher {
                 (String) input.get("password"),
                 (String) input.get("email")
             );
-            
+
             return accountService.register(registerDTO)
                 .subscribeAsCompletionStage();
         };

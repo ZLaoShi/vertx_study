@@ -40,7 +40,7 @@ public class AccountService {
                     
                     // 更新最后登录时间
                     account.setLastLogin(OffsetDateTime.now());
-                    
+
                     // 合并更新并生成 token
                     return session.merge(account)
                         .call(session::flush)

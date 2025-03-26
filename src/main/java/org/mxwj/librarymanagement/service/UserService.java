@@ -12,22 +12,22 @@ import java.util.List;
 
 public class UserService {
     private final Mutiny.SessionFactory factory;
-    
+
     public UserService() {
         factory = DatabaseManager.getSessionFactory();
     }
 
     public Uni<User> findById(Integer id) {
-        return factory.withSession(session -> 
+        return factory.withSession(session ->
             session.find(User.class, id)
         ).onFailure().invoke(error -> {
             System.err.println("数据库查询错误: " + error.getMessage());
             error.printStackTrace();
         });
     }
-    
+
     public Uni<List<User>> findAll() {
-        return factory.withSession(session -> 
+        return factory.withSession(session ->
             session.createQuery("FROM User", User.class).getResultList()
         ).onFailure().invoke(error -> {
             System.err.println("查询所有用户失败: " + error.getMessage());
@@ -36,7 +36,7 @@ public class UserService {
     }
 
     public Uni<UsersPage> findAllPaged(int page, int size, String orderBy) {
-        return factory.withSession(session -> 
+        return factory.withSession(session ->
             // 先执行计数查询
             session.createQuery("SELECT COUNT(u) FROM User u", Long.class)
                 .getSingleResult()
@@ -56,7 +56,7 @@ public class UserService {
                                 .totalElements(total.intValue())
                                 .hasNext(page < totalPages)
                                 .build();
-                            
+
                             return UsersPage.builder()
                                 .content(users)
                                 .pageInfo(pageInfo)
@@ -67,7 +67,7 @@ public class UserService {
     }
 
     public Uni<User> createUser(User user) {
-        return factory.withSession(session -> 
+        return factory.withSession(session ->
             session.persist(user)
                 .call(session::flush)  // 使用 call 替代 chain
                 .replaceWith(user)     // 使用 replaceWith 替代 map
@@ -79,7 +79,7 @@ public class UserService {
     }
 
     public Uni<User> updateUser(Integer id, User updatedUser) {
-        return factory.withSession(session -> 
+        return factory.withSession(session ->
             session.find(User.class, id)
                 .onItem().ifNotNull().transform(existingUser -> {
                     existingUser.setName(updatedUser.getName());
@@ -91,9 +91,9 @@ public class UserService {
     }
 
     public Uni<Boolean> deleteUser(Integer id) {
-        return factory.withSession(session -> 
+        return factory.withSession(session ->
             session.find(User.class, id)
-                .onItem().ifNotNull().transformToUni(user -> 
+                .onItem().ifNotNull().transformToUni(user ->
                     session.remove(user)
                         .call(session::flush)
                         .replaceWith(true)
