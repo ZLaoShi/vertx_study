@@ -78,6 +78,7 @@ public class MainVerticle extends AbstractVerticle {
                             .dataFetcher("login", authFetcher.login())
                             .dataFetcher("register", authFetcher.register())
                             .dataFetcher("logout", authFetcher.logout())
+                            .dataFetcher("createUserInfo", GraphQLAuthHandler.requireUser(userInfoFetcher.createUserInfo()))
                     )
                     .build();
 

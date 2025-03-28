@@ -22,7 +22,6 @@ public class GraphQLAuthHandler {
         return requireRole(fetcher, 0);
     }
 
-    // 修改为基于角色的验证
     public static DataFetcher<?> requireRole(DataFetcher<?> fetcher, int requiredRole) {
     return environment -> {
         // 从 DataFetchingEnvironment 获取 RoutingContext

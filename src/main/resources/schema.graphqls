@@ -50,7 +50,7 @@ type UserInfo {
 }
 
 input UserInfoInput {
- fullname: String!
+ fullName: String!
  phone: String
  address: String
  maxBorrowBooks: Int

@@ -19,7 +19,8 @@ public class UserFetcher {
     public DataFetcher<CompletableFuture<User>> getUserById() {
         return env -> {
             Integer id = Integer.parseInt(env.getArgument("id"));
-            return userService.findById(id).subscribeAsCompletionStage();
+
+            return  userService.findById(id).subscribeAsCompletionStage();
         };
     }
 
