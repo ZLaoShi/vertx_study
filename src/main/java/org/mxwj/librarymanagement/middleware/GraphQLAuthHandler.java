@@ -23,34 +23,34 @@ public class GraphQLAuthHandler {
     }
 
     public static DataFetcher<?> requireRole(DataFetcher<?> fetcher, int requiredRole) {
-    return environment -> {
-        // 从 DataFetchingEnvironment 获取 RoutingContext
-        RoutingContext routingContext = environment.getGraphQlContext().get(RoutingContext.class);
-        if (routingContext == null) {
-            throw new AuthenticationException("上下文错误");
-        }
+        return environment -> {
+            // 从 DataFetchingEnvironment 获取 RoutingContext
+            RoutingContext routingContext = environment.getGraphQlContext().get(RoutingContext.class);
+            if (routingContext == null) {
+                throw new AuthenticationException("上下文错误");
+            }
 
-        JsonObject userPrincipal = routingContext.get("userPrincipal");
-        
-        System.out.println("Context: " + routingContext);
-        System.out.println("User Principal: " + userPrincipal);
-        
-        if (userPrincipal == null) {
-            throw new AuthenticationException("未登录");
-        }
+            JsonObject userPrincipal = routingContext.get("userPrincipal");
 
-        String roleStr = userPrincipal.getString("role");
-        if (roleStr == null) {
-            throw new AuthenticationException("用户角色未定义");
-        }
+            System.out.println("Context: " + routingContext);
+            System.out.println("User Principal: " + userPrincipal);
 
-        int userRole = Integer.parseInt(roleStr);
-        if (userRole < requiredRole) {
-            throw new AuthenticationException("无权限执行此操作");
-        }
+            if (userPrincipal == null) {
+                throw new AuthenticationException("未登录");
+            }
 
-        return fetcher.get(environment);
-    };
-}
-    
+            String roleStr = userPrincipal.getString("role");
+            if (roleStr == null) {
+                throw new AuthenticationException("用户角色未定义");
+            }
+
+            int userRole = Integer.parseInt(roleStr);
+            if (userRole < requiredRole) {
+                throw new AuthenticationException("无权限执行此操作");
+            }
+
+            return fetcher.get(environment);
+        };
+    }
+
 }

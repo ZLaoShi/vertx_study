@@ -11,6 +11,8 @@ import org.mxwj.librarymanagement.utils.JWTUtils;
 
 import io.vertx.core.Future; 
 import io.vertx.core.Vertx;
+import jakarta.persistence.NoResultException;
+
 import org.mindrot.jbcrypt.BCrypt;
 import java.time.OffsetDateTime;
 
@@ -30,12 +32,12 @@ public class AccountService {
                 .setParameter("username", loginDTO.getUsername())
                 .getSingleResultOrNull()
                 .onItem().ifNull().failWith(() -> 
-                    new RuntimeException("用户不存在"))
+                    new NoResultException("用户不存在"))
                 .onItem().transformToUni(account -> {
                     // 密码验证
                     if (!BCrypt.checkpw(loginDTO.getPassword(), account.getPassword())) {
                         return Uni.createFrom().failure(
-                            new RuntimeException("密码错误"));
+                            new NoResultException("密码错误"));
                     }
                     
                     // 更新最后登录时间
@@ -63,7 +65,7 @@ public class AccountService {
                 .setParameter("username", registerDTO.getUsername())
                 .getSingleResultOrNull()
                 .onItem().ifNotNull().failWith(() -> 
-                    new RuntimeException("用户名已存在"))
+                    new IllegalArgumentException("用户名已存在"))
                 .onItem().transformToUni(v -> {
                     // 创建新账户
                     Account account = new Account();

@@ -9,6 +9,7 @@ type Mutation {
   updateUser(id: ID!, input: UserInput!): User
   deleteUser(id: ID!): Boolean
   createUserInfo(input: UserInfoInput!): UserInfo
+  updateUserInfo(input: UserInfoInput!): UserInfo
   login(username: String!, password: String!): LoginResponse
   register(input: AccountInput!): Account
   logout(token: String!): Boolean 

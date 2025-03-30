@@ -5,6 +5,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.mxwj.librarymanagement.model.UserInfo;
 import org.mxwj.librarymanagement.model.dto.CreateUserInfoDTO;
+import org.mxwj.librarymanagement.model.dto.UpdateUserInfoDTO;
 import org.mxwj.librarymanagement.service.UserInfoService;
 import org.mxwj.librarymanagement.utils.ContextHelper;
 
@@ -20,13 +21,13 @@ public class UserInfoFetcher {
     public DataFetcher<CompletableFuture<UserInfo>> getUserInfoById() {
         return env -> {
             Long id = Long.parseLong(env.getArgument("id"));
+
             return userInfoService.findById(id).subscribeAsCompletionStage();
         };
     }
 
     public DataFetcher<CompletableFuture<UserInfo>> createUserInfo() {
         return env -> {
-            System.out.println("ceate yes");
             Map<String, Object> input = env.getArgument("input");
             CreateUserInfoDTO userInfoDto = new CreateUserInfoDTO();
             userInfoDto.setId((Long) input.get("id"));
@@ -38,6 +39,21 @@ public class UserInfoFetcher {
             return userInfoService.createUserInfo(userInfoDto).subscribeAsCompletionStage();
         };
     }
+
+    public DataFetcher<CompletableFuture<UserInfo>> updateUserInfo() {
+        return env -> {
+           Map<String, Object> input = env.getArgument("input");
+           UpdateUserInfoDTO userInfoDto = new UpdateUserInfoDTO();
+           userInfoDto.setId((Long) input.get("id"));
+           userInfoDto.setAccountId(ContextHelper.getAccountId(env));
+           userInfoDto.setFullName((String) input.get("fullName"));
+           userInfoDto.setPhone((String) input.get("phone"));
+           userInfoDto.setAddress((String) input.get("address"));
+
+            return userInfoService.updateUserInfo(userInfoDto).subscribeAsCompletionStage();
+        };
+
+    }    //更新UserInfo
 
 }
 
