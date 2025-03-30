@@ -30,7 +30,6 @@ public class UserInfoFetcher {
         return env -> {
             Map<String, Object> input = env.getArgument("input");
             CreateUserInfoDTO userInfoDto = new CreateUserInfoDTO();
-            userInfoDto.setId((Long) input.get("id"));
             userInfoDto.setAccountId(ContextHelper.getAccountId(env));
             userInfoDto.setFullName((String) input.get("fullName"));
             userInfoDto.setPhone((String) input.get("phone"));
@@ -44,7 +43,6 @@ public class UserInfoFetcher {
         return env -> {
            Map<String, Object> input = env.getArgument("input");
            UpdateUserInfoDTO userInfoDto = new UpdateUserInfoDTO();
-           userInfoDto.setId((Long) input.get("id"));
            userInfoDto.setAccountId(ContextHelper.getAccountId(env));
            userInfoDto.setFullName((String) input.get("fullName"));
            userInfoDto.setPhone((String) input.get("phone"));

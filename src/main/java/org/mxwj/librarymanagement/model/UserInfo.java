@@ -16,8 +16,8 @@ public class UserInfo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "account_id", nullable = false)
+    @OneToOne
+    @JoinColumn(name = "account_id", unique = true, nullable = false)
     private Account account;
 
     @Column(name = "full_name", nullable = false, length = 100)

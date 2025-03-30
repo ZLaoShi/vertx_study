@@ -82,7 +82,7 @@ public class MainVerticle extends AbstractVerticle {
                             .dataFetcher("updateUserInfo", GraphQLAuthHandler.requireUser(userInfoFetcher.updateUserInfo()))
                     )
                     .build();
-
+                    //TODO 书籍模块
                 GraphQLSchema graphQLSchema = new SchemaGenerator()
                     .makeExecutableSchema(typeRegistry, runtimeWiring);
 

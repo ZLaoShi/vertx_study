@@ -1,6 +1,7 @@
 type Query {
   user(id: ID!): User
   users(page: Int = 1, size: Int = 10, orderBy:String = "id"): UsersPage
+  
   userInfo(id: ID!): UserInfo
 }
 
@@ -8,9 +9,11 @@ type Mutation {
   createUser(input: UserInput!): User
   updateUser(id: ID!, input: UserInput!): User
   deleteUser(id: ID!): Boolean
+
   createUserInfo(input: UserInfoInput!): UserInfo
   updateUserInfo(input: UserInfoInput!): UserInfo
   login(username: String!, password: String!): LoginResponse
+
   register(input: AccountInput!): Account
   logout(token: String!): Boolean 
 }
@@ -55,6 +58,16 @@ input UserInfoInput {
  phone: String
  address: String
  maxBorrowBooks: Int
+}
+
+type Book {
+  id: ID
+  isbn: String
+  title: String
+  author: String
+  publisher: String
+  category: String
+  description: String
 }
 
 type User {

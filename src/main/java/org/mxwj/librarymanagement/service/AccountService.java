@@ -67,7 +67,7 @@ public class AccountService {
                 .onItem().ifNotNull().failWith(() -> 
                     new IllegalArgumentException("用户名已存在"))
                 .onItem().transformToUni(v -> {
-                    // 创建新账户
+                    
                     Account account = new Account();
                     account.setUsername(registerDTO.getUsername());
                     account.setPassword(BCrypt.hashpw(registerDTO.getPassword(), BCrypt.gensalt()));
