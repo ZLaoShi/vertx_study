@@ -52,5 +52,4 @@ public class GraphQLAuthHandler {
             return fetcher.get(environment);
         };
     }
-
 }

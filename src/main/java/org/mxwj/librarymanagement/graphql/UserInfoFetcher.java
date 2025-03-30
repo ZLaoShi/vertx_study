@@ -52,8 +52,7 @@ public class UserInfoFetcher {
 
             return userInfoService.updateUserInfo(userInfoDto).subscribeAsCompletionStage();
         };
-
-    }    //更新UserInfo
+    }   
 
 }
 

@@ -56,22 +56,22 @@ public class UserInfoService {
         });
     }
 
-    public Uni<UserInfo> updateUserInfo(UpdateUserInfoDTO updateUserInfoDTO) {
+    public Uni<UserInfo> updateUserInfo(UpdateUserInfoDTO updateUserInfoDto) {
         return factory.withSession(session -> {
-            return    session.find(UserInfo.class, updateUserInfoDTO.getId())
-                        .onItem().ifNull().failWith(() -> new NoResultException("更新 UserInfo 失败：未找到 ID 为 " + updateUserInfoDTO.getId() + " 的 UserInfo"))
+            return    session.find(UserInfo.class, updateUserInfoDto.getAccountId())
+                        .onItem().ifNull().failWith(() -> new NoResultException("更新 UserInfo 失败：未找到 ID 为 " + updateUserInfoDto.getAccountId() + " 的 UserInfo"))
                         .flatMap(userInfo -> {
                             boolean updated = false;
-                            if (updateUserInfoDTO.getFullName() != null) {
-                                userInfo.setFullName(updateUserInfoDTO.getFullName());
+                            if (updateUserInfoDto.getFullName() != null) {
+                                userInfo.setFullName(updateUserInfoDto.getFullName());
                                 updated = true;
                             }
-                            if (updateUserInfoDTO.getPhone() != null) {
-                                userInfo.setPhone(updateUserInfoDTO.getPhone());
+                            if (updateUserInfoDto.getPhone() != null) {
+                                userInfo.setPhone(updateUserInfoDto.getPhone());
                                 updated = true;
                             }
-                            if (updateUserInfoDTO.getAddress() != null) {
-                                userInfo.setAddress(updateUserInfoDTO.getAddress());
+                            if (updateUserInfoDto.getAddress() != null) {
+                                userInfo.setAddress(updateUserInfoDto.getAddress());
                                 updated = true;
                             }
                             if (updated) {
