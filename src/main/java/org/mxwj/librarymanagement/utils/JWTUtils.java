@@ -1,6 +1,6 @@
 package org.mxwj.librarymanagement.utils;
 
-import java.util.Arrays;
+import java.util.List;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -24,13 +24,13 @@ public class JWTUtils {
         // 配置JWT
         JWTAuthOptions config = new JWTAuthOptions()
             .addPubSecKey(new PubSecKeyOptions()
-                .setAlgorithm("HS256")      
-                .setBuffer(SECRET));     
-                
+                .setAlgorithm("HS256")
+                .setBuffer(SECRET));
+
         this.jwtAuth = JWTAuth.create(vertx, config);
         this.redisClient = new RedisClient(vertx);
     }
-    
+
     public Future<String> generateToken(String userId, String role) {
         String token = jwtAuth.generateToken(
             new JsonObject()
@@ -48,8 +48,8 @@ public class JWTUtils {
 
     public Future<User> validateToken(String token) {
         TokenCredentials credentials = new TokenCredentials(token);
-    
-        return Future.future(promise -> 
+
+        return Future.future(promise ->
             jwtAuth.authenticate(credentials)
                 .onSuccess(user -> {
                     String userId = user.principal().getString("sub");
@@ -64,22 +64,22 @@ public class JWTUtils {
                                 promise.fail("Invalid token");
                             }
                         })
-                        .onFailure(err -> promise.fail(err));
+                        .onFailure(promise::fail);
                 })
-                .onFailure(err -> promise.fail(err))
+                .onFailure(promise::fail)
         );
     }
 
     public Future<Void> revokeToken(String token) {
         TokenCredentials credentials = new TokenCredentials(token);
-    
+
         return Future.future(promise ->
             jwtAuth.authenticate(credentials)
                 .onSuccess(user -> {
                     String userId = user.principal().getString("sub");
                     // 删除 Redis 中的 token
                     redisClient.getRedisAPI()
-                        .compose(redis -> redis.del(Arrays.asList("token:" + userId)))
+                        .compose(redis -> redis.del(List.of("token:" + userId)))
                         .onSuccess(res -> promise.complete())
                         .onFailure(err -> {
                             System.err.println("删除token失败: " + err.getMessage());

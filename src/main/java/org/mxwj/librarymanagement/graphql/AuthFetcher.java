@@ -22,9 +22,9 @@ public class AuthFetcher {
             String username = env.getArgument("username");
             String password = env.getArgument("password");
             LoginDTO loginDTO = new LoginDTO(username, password);
-            
+
             return accountService.login(loginDTO)
-                .map(loginVO -> JsonObject.mapFrom(loginVO))
+                .map(JsonObject::mapFrom)
                 .subscribeAsCompletionStage();
         };
     }

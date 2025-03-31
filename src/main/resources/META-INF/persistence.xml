@@ -6,23 +6,23 @@
 
     <persistence-unit name="pg-vertx-study">
         <provider>org.hibernate.reactive.provider.ReactivePersistenceProvider</provider>
-        
-        <class>com.example.librarymanagement.model.User</class>
-        
+
+        <class>org.mxwj.librarymanagement.model.User</class>
+
         <properties>
             <!-- Vert.x PostgreSQL 连接配置 -->
             <property name="jakarta.persistence.jdbc.url" value="postgresql://localhost:5432/vertx_study"/>
             <property name="jakarta.persistence.jdbc.user" value="postgres"/>
             <property name="jakarta.persistence.jdbc.password" value="114514"/>
-            
+
             <!-- Hibernate Reactive 特定配置 -->
             <property name="hibernate.connection.pool_size" value="10"/>
-            
+
             <!-- SQL 日志配置 -->
             <property name="hibernate.show_sql" value="true"/>
             <property name="hibernate.format_sql" value="true"/>
             <property name="hibernate.highlight_sql" value="true"/>
-            
+
             <!-- 启用响应式模式 -->
             <!-- <property name="hibernate.reactive" value="true"/> -->
 

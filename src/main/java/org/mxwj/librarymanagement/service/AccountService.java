@@ -9,7 +9,7 @@ import org.mxwj.librarymanagement.model.dto.RegisterDTO;
 import org.mxwj.librarymanagement.model.vo.LoginVO;
 import org.mxwj.librarymanagement.utils.JWTUtils;
 
-import io.vertx.core.Future; 
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import jakarta.persistence.NoResultException;
 
@@ -19,7 +19,7 @@ import java.time.OffsetDateTime;
 public class AccountService {
     private final Mutiny.SessionFactory factory;
     private final JWTUtils jwtUtils;
-    
+
     public AccountService(Vertx vertx) {
         factory = DatabaseManager.getSessionFactory();
         this.jwtUtils = new JWTUtils(vertx);
@@ -31,7 +31,7 @@ public class AccountService {
             return session.createQuery("FROM Account WHERE username = :username", Account.class)
                 .setParameter("username", loginDTO.getUsername())
                 .getSingleResultOrNull()
-                .onItem().ifNull().failWith(() -> 
+                .onItem().ifNull().failWith(() ->
                     new NoResultException("用户不存在"))
                 .onItem().transformToUni(account -> {
                     // 密码验证
@@ -39,7 +39,7 @@ public class AccountService {
                         return Uni.createFrom().failure(
                             new NoResultException("密码错误"));
                     }
-                    
+
                     // 更新最后登录时间
                     account.setLastLogin(OffsetDateTime.now());
 
@@ -64,17 +64,17 @@ public class AccountService {
             return session.createQuery("FROM Account WHERE username = :username", Account.class)
                 .setParameter("username", registerDTO.getUsername())
                 .getSingleResultOrNull()
-                .onItem().ifNotNull().failWith(() -> 
+                .onItem().ifNotNull().failWith(() ->
                     new IllegalArgumentException("用户名已存在"))
                 .onItem().transformToUni(v -> {
-                    
+
                     Account account = new Account();
                     account.setUsername(registerDTO.getUsername());
                     account.setPassword(BCrypt.hashpw(registerDTO.getPassword(), BCrypt.gensalt()));
                     account.setEmail(registerDTO.getEmail());
                     account.setCreatedAt(OffsetDateTime.now());
                     account.setStatus((short) 1);
-                    
+
                     return session.persist(account)
                         .call(session::flush)
                         .replaceWith(account);

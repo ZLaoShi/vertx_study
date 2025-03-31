@@ -61,7 +61,6 @@ public class MainVerticle extends AbstractVerticle {
                 SchemaParser schemaParser = new SchemaParser();
                 TypeDefinitionRegistry typeRegistry = schemaParser.parse(schema);
 
-            
                 UserFetcher userFetcher = new UserFetcher(userService);
                 AuthFetcher authFetcher = new AuthFetcher(accountService);
                 UserInfoFetcher userInfoFetcher = new UserInfoFetcher(userInfoService);
@@ -102,19 +101,19 @@ public class MainVerticle extends AbstractVerticle {
             String authHeader = context.request().getHeader("Authorization");
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 String token = authHeader.substring(7);
-                
+
                 jwtUtils.validateToken(token)
                     .onSuccess(user -> {
                         // 将用户信息存储在 RoutingContext 中
                         context.put("userPrincipal", user.principal());
-                        
+
                         System.out.printf("Current Date and Time (UTC): %s%n",
                             LocalDateTime.now(ZoneOffset.UTC).format(
                                 DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
                             ));
-                        System.out.printf("Current User's Login: %s%n", 
+                        System.out.printf("Current User's Login: %s%n",
                             user.principal().getString("sub"));
-                        
+
                         context.next();
                     })
                     .onFailure(err -> context.fail(401));
@@ -122,8 +121,8 @@ public class MainVerticle extends AbstractVerticle {
                 context.next();
             }
         });
-        
-        GraphQLHandler graphQLHandler = GraphQLHandler.create(graphQL, 
+
+        GraphQLHandler graphQLHandler = GraphQLHandler.create(graphQL,
             new GraphQLHandlerOptions()
                 .setRequestBatchingEnabled(true));
 
