@@ -3,6 +3,15 @@ type Query {
   users(page: Int = 1, size: Int = 10, orderBy:String = "id"): UsersPage
   
   userInfo(id: ID!): UserInfo
+
+  book(id: ID!): Book
+  books(page: Int = 1, size: Int = 10): BooksPage
+  searchBooks(keyword: String!, page: Int = 1, size: Int = 10): BooksPage
+
+  # 查询用户的借阅记录
+  myBorrowRecords(page: Int = 1, size: Int = 10): BorrowRecordsPage
+  # 查询所有借阅记录(管理员)
+  borrowRecords(page: Int = 1, size: Int = 10): BorrowRecordsPage
 }
 
 type Mutation {
@@ -16,6 +25,15 @@ type Mutation {
 
   register(input: AccountInput!): Account
   logout(token: String!): Boolean 
+
+  createBook(input: CreateBookInput!): Book
+  updateBook(id: ID!, input: CreateBookInput!): Book
+  deleteBook(id: ID!): Boolean
+
+   # 借书
+  borrowBook(input: BorrowBookInput!): BorrowRecord
+  # 还书
+  returnBook(input: ReturnBookInput!): BorrowRecord
 }
 
 type LoginResponse {
@@ -66,8 +84,60 @@ type Book {
   title: String
   author: String
   publisher: String
+  publishDate: String
   category: String
   description: String
+  totalCopies: Int
+  availableCopies: Int
+  location: String
+  createdAt: String
+  updatedAt: String
+}
+
+input CreateBookInput {
+  isbn: String!
+  title: String!
+  author: String
+  publisher: String
+  publishDate: String
+  category: String
+  description: String
+  totalCopies: Int
+  availableCopies: Int
+  location: String
+}
+
+type BooksPage {
+  content: [Book]!
+  pageInfo: PageInfo!
+}
+
+type BorrowRecord {
+  id: ID!
+  userInfo: UserInfo!
+  book: Book!
+  borrowDate: String!
+  dueDate: String!
+  returnDate: String
+  status: Int!    # 0:借阅中, 1:已归还, 2:逾期未还, 3:已损坏/丢失
+  remarks: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type BorrowRecordsPage {
+  content: [BorrowRecord]!
+  pageInfo: PageInfo!
+}
+
+input BorrowBookInput {
+  bookId: ID!
+  remarks: String
+}
+
+input ReturnBookInput {
+  recordId: ID!
+  remarks: String
 }
 
 type User {

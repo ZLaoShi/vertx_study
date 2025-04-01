@@ -5,10 +5,14 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 import org.mxwj.librarymanagement.graphql.AuthFetcher;
+import org.mxwj.librarymanagement.graphql.BookFetcher;
+import org.mxwj.librarymanagement.graphql.BorrowFetcher;
 import org.mxwj.librarymanagement.graphql.UserFetcher;
 import org.mxwj.librarymanagement.graphql.UserInfoFetcher;
 import org.mxwj.librarymanagement.middleware.GraphQLAuthHandler;
 import org.mxwj.librarymanagement.service.AccountService;
+import org.mxwj.librarymanagement.service.BookService;
+import org.mxwj.librarymanagement.service.BorrowService;
 import org.mxwj.librarymanagement.service.UserInfoService;
 import org.mxwj.librarymanagement.service.UserService;
 import org.mxwj.librarymanagement.utils.JWTUtils;
@@ -34,6 +38,8 @@ public class MainVerticle extends AbstractVerticle {
     private UserService userService;
     private AccountService accountService;
     private UserInfoService userInfoService;
+    private BookService bookService;
+    private BorrowService borrowService;
 
     @Override
     public void start(Promise<Void> startPromise) {
@@ -49,6 +55,8 @@ public class MainVerticle extends AbstractVerticle {
             userService = new UserService();
             accountService = new AccountService(vertx);
             userInfoService = new UserInfoService();
+            bookService = new BookService();
+            borrowService = new BorrowService();
             return null;
         });
     }
@@ -64,24 +72,46 @@ public class MainVerticle extends AbstractVerticle {
                 UserFetcher userFetcher = new UserFetcher(userService);
                 AuthFetcher authFetcher = new AuthFetcher(accountService);
                 UserInfoFetcher userInfoFetcher = new UserInfoFetcher(userInfoService);
+                BookFetcher bookFetcher = new BookFetcher(bookService);
+                BorrowFetcher borrowFetcher = new BorrowFetcher(borrowService);
 
                 RuntimeWiring runtimeWiring = RuntimeWiring.newRuntimeWiring()
                     .type("Query", builder ->
                         builder
                             .dataFetcher("user", GraphQLAuthHandler.requireUser(userFetcher.getUserById()))
                             .dataFetcher("users", userFetcher.getUsers())
+
                             .dataFetcher("userInfo", userInfoFetcher.getUserInfoById())
+
+                            .dataFetcher("book", bookFetcher.getBookById())
+                            .dataFetcher("books", bookFetcher.getBooks())
+                            .dataFetcher("searchBooks", bookFetcher.searchBooks())
+
+                            .dataFetcher("myBorrowRecords", 
+                                GraphQLAuthHandler.requireUser(borrowFetcher.getMyBorrowRecords()))
+                            .dataFetcher("borrowRecords", 
+                                GraphQLAuthHandler.requireAdmin(borrowFetcher.getAllBorrowRecords()))
                     )
                     .type("Mutation", builder ->
                         builder
                             .dataFetcher("login", authFetcher.login())
                             .dataFetcher("register", authFetcher.register())
-                            .dataFetcher("logout", authFetcher.logout())
+                            .dataFetcher("logout", GraphQLAuthHandler.requireUser(authFetcher.logout()))
+
                             .dataFetcher("createUserInfo", GraphQLAuthHandler.requireUser(userInfoFetcher.createUserInfo()))
                             .dataFetcher("updateUserInfo", GraphQLAuthHandler.requireUser(userInfoFetcher.updateUserInfo()))
+
+                            .dataFetcher("createBook", GraphQLAuthHandler.requireAdmin(bookFetcher.createBook()))
+                            .dataFetcher("updateBook", GraphQLAuthHandler.requireAdmin(bookFetcher.updateBook()))
+                            .dataFetcher("deleteBook", GraphQLAuthHandler.requireAdmin(bookFetcher.deleteBook()))
+
+                            .dataFetcher("borrowBook", GraphQLAuthHandler.requireUser(borrowFetcher.borrowBook()))
+                            .dataFetcher("returnBook", GraphQLAuthHandler.requireUser(borrowFetcher.returnBook()))
                     )
                     .build();
-                    //TODO 书籍模块
+                    //TODO 借阅模块
+                    //TODO 管理员账户管理模块
+                    //TODO 管理员借阅管理模块
                 GraphQLSchema graphQLSchema = new SchemaGenerator()
                     .makeExecutableSchema(typeRegistry, runtimeWiring);
 
