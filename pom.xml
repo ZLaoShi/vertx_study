@@ -117,6 +117,13 @@
       <artifactId>vertx-web-graphql</artifactId>
     <version>${vertx.version}</version>
     </dependency>
+
+  <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jsr310</artifactId>
+      <!-- 使用你项目兼容的 Jackson 版本 -->
+      <version>2.15.2</version> 
+  </dependency>
   
     <dependency>
       <groupId>io.vertx</groupId>
