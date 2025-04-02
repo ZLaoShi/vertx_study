@@ -7,7 +7,6 @@ import org.mxwj.librarymanagement.model.Book;
 import org.mxwj.librarymanagement.model.BooksPage;
 import org.mxwj.librarymanagement.model.dto.CreateBookDTO;
 import org.mxwj.librarymanagement.service.BookService;
-import org.mxwj.librarymanagement.utils.DTOMapper;
 import org.mxwj.librarymanagement.utils.RequestDtoMapper;
 
 import graphql.schema.DataFetcher;
@@ -46,27 +45,6 @@ public class BookFetcher {
         };
     }
 
-    // //创建书籍
-    // public DataFetcher<CompletableFuture<Book>> createBook() {
-    //     return env -> {
-    //         Map<String, Object> input = env.getArgument("input");
-    //         CreateBookDTO createBookDTO = new CreateBookDTO();
-    //         createBookDTO.setIsbn((String) input.get("isbn"));
-    //         createBookDTO.setTitle((String) input.get("title"));
-    //         createBookDTO.setAuthor((String) input.get("author"));
-    //         createBookDTO.setPublisher((String) input.get("publisher"));
-    //         createBookDTO.setPublishDate((String) input.get("publishDate"));
-    //         createBookDTO.setCategory((String) input.get("category"));
-    //         createBookDTO.setDescription((String) input.get("description"));
-    //         createBookDTO.setTotalCopies((Integer) input.get("totalCopies"));
-    //         createBookDTO.setLocation((String) input.get("location"));
-
-    //     // 调用 service 层创建图书
-    //     return bookService.createBook(createBookDTO).subscribeAsCompletionStage();
-    //     };
-
-    // }
-
     // 创建书籍
     public DataFetcher<CompletableFuture<Book>> createBook() {
         return env -> {
@@ -82,17 +60,7 @@ public class BookFetcher {
         return env -> {
             Long id = Long.parseLong(env.getArgument("id"));
             Map<String, Object> input = env.getArgument("input");
-            
-            CreateBookDTO updateBookDTO = new CreateBookDTO(); //有需求再换
-            updateBookDTO.setIsbn((String) input.get("isbn"));
-            updateBookDTO.setTitle((String) input.get("title"));
-            updateBookDTO.setAuthor((String) input.get("author"));
-            updateBookDTO.setPublisher((String) input.get("publisher"));
-            updateBookDTO.setPublishDate((String) input.get("publishDate"));
-            updateBookDTO.setCategory((String) input.get("category"));
-            updateBookDTO.setDescription((String) input.get("description"));
-            updateBookDTO.setTotalCopies((Integer) input.get("totalCopies"));
-            updateBookDTO.setLocation((String) input.get("location"));
+            CreateBookDTO updateBookDTO = RequestDtoMapper.convertValue(input, CreateBookDTO.class);
 
             return bookService.updateBook(id, updateBookDTO).subscribeAsCompletionStage();
         };

@@ -8,6 +8,7 @@ import org.mxwj.librarymanagement.model.dto.CreateUserInfoDTO;
 import org.mxwj.librarymanagement.model.dto.UpdateUserInfoDTO;
 import org.mxwj.librarymanagement.service.UserInfoService;
 import org.mxwj.librarymanagement.utils.ContextHelper;
+import org.mxwj.librarymanagement.utils.RequestDtoMapper;
 
 import graphql.schema.DataFetcher;
 
@@ -29,11 +30,7 @@ public class UserInfoFetcher {
     public DataFetcher<CompletableFuture<UserInfo>> createUserInfo() {
         return env -> {
             Map<String, Object> input = env.getArgument("input");
-            CreateUserInfoDTO userInfoDto = new CreateUserInfoDTO();
-            userInfoDto.setAccountId(ContextHelper.getAccountId(env));
-            userInfoDto.setFullName((String) input.get("fullName"));
-            userInfoDto.setPhone((String) input.get("phone"));
-            userInfoDto.setAddress((String) input.get("address"));
+            CreateUserInfoDTO userInfoDto = RequestDtoMapper.convertValue(input, CreateUserInfoDTO.class);
 
             return userInfoService.createUserInfo(userInfoDto).subscribeAsCompletionStage();
         };

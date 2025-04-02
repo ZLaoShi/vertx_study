@@ -60,7 +60,7 @@ public class AccountFetcher {
             if (currentUserId.equals(id)) {
                 throw new IllegalArgumentException("不能修改自己的账户类型");
             }
-            
+            System.out.println("this updata Type" + id + userType);
             return accountService.updateUserType(id, userType).subscribeAsCompletionStage();
         };
     }

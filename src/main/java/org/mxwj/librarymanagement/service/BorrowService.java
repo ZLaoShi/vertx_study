@@ -152,6 +152,18 @@ public class BorrowService {
         });
     }
 
+    // 根据ID查询借阅记录
+    public Uni<BorrowRecord> findBorrowRecordById(Long recordId) {
+        return factory.withSession(session -> 
+            session.find(BorrowRecord.class, recordId)
+                .onItem().ifNull().failWith(() -> 
+                    new IllegalArgumentException("借阅记录不存在"))
+        ).onFailure().invoke(error -> {
+            System.err.println("查询借阅记录失败: " + error.getMessage());
+            error.printStackTrace();
+        });
+    }
+
     // 查询所有借阅记录(管理员)
     public Uni<BorrowRecordsPage> findAllBorrowRecords(int page, int size) {
         return factory.withSession(session -> {
@@ -186,4 +198,40 @@ public class BorrowService {
             error.printStackTrace();
         });
     }
+
+    public Uni<BorrowRecord> forceReturn(Long recordId, Short status, String remarks) {
+        return factory.withTransaction((session, tx) ->
+            session.find(BorrowRecord.class, recordId)
+                .onItem().ifNull().failWith(() -> 
+                    new IllegalArgumentException("借阅记录不存在"))
+                .flatMap(record -> {
+                    if (record.getStatus() != 0) {
+                        return Uni.createFrom().failure(
+                            new IllegalStateException("该记录已完成还书")
+                        );
+                    }
+    
+                    // 更新借阅记录
+                    record.setReturnDate(OffsetDateTime.now());
+                    record.setStatus(status); // 2:逾期未还, 3:已损坏/丢失
+                    if (remarks != null) {
+                        record.setRemarks(remarks);
+                    }
+                    record.setUpdatedAt(OffsetDateTime.now());
+    
+                    // 更新图书可用数量(如果是丢失/损坏,不增加可用数量)
+                    if (status != 3) {
+                        Book book = record.getBook();
+                        book.setAvailableCopies(book.getAvailableCopies() + 1);
+                    }
+    
+                    return session.flush()
+                        .replaceWith(record);
+                })
+            ).onFailure().invoke(error -> {
+                System.err.println("强制归还失败: " + error.getMessage());
+                error.printStackTrace();
+            });
+    }
+    
 }

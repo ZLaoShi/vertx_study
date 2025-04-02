@@ -38,6 +38,13 @@ type Mutation {
   updateAccountStatus(id: ID!, status: Int!): Account 
   updateAccountType(id: ID!, userType: Int!): Account 
   resetPassword(id: ID!, newPassword: String!): Boolean 
+
+  # 管理员代替用户借书
+  adminBorrowBook(userId: ID!, input: BorrowBookInput!): BorrowRecord
+  # 管理员代替用户还书
+  adminReturnBook(userId: ID!, input: ReturnBookInput!): BorrowRecord
+  # 管理员强制归还图书(处理特殊情况如图书丢失、损坏等)
+  adminForceReturn(recordId: ID!, status: Int!, remarks: String): BorrowRecord
 }
 
 type LoginResponse {

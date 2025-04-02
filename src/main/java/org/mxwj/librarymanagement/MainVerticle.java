@@ -115,12 +115,15 @@ public class MainVerticle extends AbstractVerticle {
                             .dataFetcher("returnBook", GraphQLAuthHandler.requireUser(borrowFetcher.returnBook()))
 
                             .dataFetcher("updateAccountStatus", GraphQLAuthHandler.requireAdmin(accountFetcher.updateAccountStatus()))
-                            //.dataFetcher("updataAccountType", GraphQLAuthHandler.requireAdmin(accountFetcher.updateAccountType()))
+                            .dataFetcher("updataAccountType", GraphQLAuthHandler.requireAdmin(accountFetcher.updateAccountType()))
                             .dataFetcher("resetPassword", GraphQLAuthHandler.requireAdmin(accountFetcher.resetPassword()))
+
+                            .dataFetcher("adminBorrowBook", GraphQLAuthHandler.requireAdmin(borrowFetcher.adminBorrowBook()))
+                            .dataFetcher("adminReturnBook", GraphQLAuthHandler.requireAdmin(borrowFetcher.adminReturnBook()))
+                            .dataFetcher("adminForceReturn", GraphQLAuthHandler.requireAdmin(borrowFetcher.adminForceReturn()))
 
                             )
                     .build();
-                    //TODO 管理员账户管理模块
                     //TODO 管理员借阅管理模块
                 GraphQLSchema graphQLSchema = new SchemaGenerator()
                     .makeExecutableSchema(typeRegistry, runtimeWiring);
@@ -160,7 +163,7 @@ public class MainVerticle extends AbstractVerticle {
             } else {
                 context.next();
             }
-        });
+        }); //TODO 第一次启动后如果输入一个不存在的token会导致服务器错误
 
         GraphQLHandler graphQLHandler = GraphQLHandler.create(graphQL,
             new GraphQLHandlerOptions()
