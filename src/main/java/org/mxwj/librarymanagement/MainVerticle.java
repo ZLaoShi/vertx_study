@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
+import org.mxwj.librarymanagement.graphql.AccountFetcher;
 import org.mxwj.librarymanagement.graphql.AuthFetcher;
 import org.mxwj.librarymanagement.graphql.BookFetcher;
 import org.mxwj.librarymanagement.graphql.BorrowFetcher;
@@ -74,6 +75,7 @@ public class MainVerticle extends AbstractVerticle {
                 UserInfoFetcher userInfoFetcher = new UserInfoFetcher(userInfoService);
                 BookFetcher bookFetcher = new BookFetcher(bookService);
                 BorrowFetcher borrowFetcher = new BorrowFetcher(borrowService);
+                AccountFetcher accountFetcher = new AccountFetcher(accountService);
 
                 RuntimeWiring runtimeWiring = RuntimeWiring.newRuntimeWiring()
                     .type("Query", builder ->
@@ -91,6 +93,10 @@ public class MainVerticle extends AbstractVerticle {
                                 GraphQLAuthHandler.requireUser(borrowFetcher.getMyBorrowRecords()))
                             .dataFetcher("borrowRecords", 
                                 GraphQLAuthHandler.requireAdmin(borrowFetcher.getAllBorrowRecords()))
+
+                            .dataFetcher("account", GraphQLAuthHandler.requireAdmin(accountFetcher.getAccountById()))
+                            .dataFetcher("accounts", GraphQLAuthHandler.requireAdmin(accountFetcher.getAccounts()))
+                            .dataFetcher("searchAccounts", GraphQLAuthHandler.requireAdmin(accountFetcher.searchAccounts()))
                     )
                     .type("Mutation", builder ->
                         builder
@@ -107,9 +113,13 @@ public class MainVerticle extends AbstractVerticle {
 
                             .dataFetcher("borrowBook", GraphQLAuthHandler.requireUser(borrowFetcher.borrowBook()))
                             .dataFetcher("returnBook", GraphQLAuthHandler.requireUser(borrowFetcher.returnBook()))
-                    )
+
+                            .dataFetcher("updateAccountStatus", GraphQLAuthHandler.requireAdmin(accountFetcher.updateAccountStatus()))
+                            //.dataFetcher("updataAccountType", GraphQLAuthHandler.requireAdmin(accountFetcher.updateAccountType()))
+                            .dataFetcher("resetPassword", GraphQLAuthHandler.requireAdmin(accountFetcher.resetPassword()))
+
+                            )
                     .build();
-                    //TODO 借阅模块
                     //TODO 管理员账户管理模块
                     //TODO 管理员借阅管理模块
                 GraphQLSchema graphQLSchema = new SchemaGenerator()

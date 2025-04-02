@@ -4,10 +4,13 @@ import io.smallrye.mutiny.Uni;
 import org.hibernate.reactive.mutiny.Mutiny;
 import org.mxwj.librarymanagement.lib.DatabaseManager;
 import org.mxwj.librarymanagement.model.Account;
+import org.mxwj.librarymanagement.model.AccountPage;
 import org.mxwj.librarymanagement.model.dto.LoginDTO;
 import org.mxwj.librarymanagement.model.dto.RegisterDTO;
+import org.mxwj.librarymanagement.model.dto.UpdateAccountStatusDTO;
 import org.mxwj.librarymanagement.model.vo.LoginVO;
 import org.mxwj.librarymanagement.utils.JWTUtils;
+import org.mxwj.librarymanagement.model.PageInfo;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -73,7 +76,7 @@ public class AccountService {
                     account.setPassword(BCrypt.hashpw(registerDTO.getPassword(), BCrypt.gensalt()));
                     account.setEmail(registerDTO.getEmail());
                     account.setCreatedAt(OffsetDateTime.now());
-                    account.setStatus((short) 1);
+                    account.setStatus((Integer) 1);
 
                     return session.persist(account)
                         .call(session::flush)
@@ -91,4 +94,137 @@ public class AccountService {
         });
     }
 
+    // 根据ID查询账户
+    public Uni<Account> findById(Long id) {
+        return factory.withSession(session ->
+            session.find(Account.class, id)
+                .onItem().ifNull().failWith(() -> 
+                    new NoResultException("未找到ID为 " + id + " 的账户"))
+        ).onFailure().invoke(error -> {
+            System.err.println("查询账户失败: " + error.getMessage());
+            error.printStackTrace();
+        });
+    }
+
+    // 分页查询账户列表
+    public Uni<AccountPage> findAllPaged(int page, int size, String orderBy) {
+        return factory.withSession(session -> 
+             session.createQuery("SELECT COUNT(a) FROM Account a", Long.class)
+                .getSingleResult()
+                .chain(total -> {
+                    String query = String.format("FROM Account a ORDER BY a.%s", orderBy);
+                    return session.createQuery(query, Account.class)
+                        .setFirstResult((page - 1) * size)
+                        .setMaxResults(size)
+                        .getResultList()
+                        .map(accounts -> {
+                            int totalPages = (int) Math.ceil((double) total / size);
+                            PageInfo pageInfo = PageInfo.builder()
+                                .currentPage(page)
+                                .pageSize(size)
+                                .totalPages(totalPages)
+                                .totalElements(total.intValue())
+                                .hasNext(page < totalPages)
+                                .build();
+
+                            return AccountPage.builder()
+                                .content(accounts)
+                                .pageInfo(pageInfo)
+                                .build();
+                        });
+                })
+        ).onFailure().invoke(error -> {
+            System.err.println("分页查询账户失败: " + error.getMessage());
+            error.printStackTrace();
+        });
+    }
+
+    // 更新账户状态
+    public Uni<Account> updateStatus(UpdateAccountStatusDTO updateAccountStatusDTO) {
+        return factory.withSession(session ->
+            session.find(Account.class, updateAccountStatusDTO.getId())
+                .onItem().ifNull().failWith(() -> 
+                    new NoResultException("未找到ID为 " + updateAccountStatusDTO.getId() + " 的账户"))
+                .flatMap(account -> {
+                    account.setStatus(updateAccountStatusDTO.getStatus());
+                    return session.flush()
+                        .replaceWith(account);
+                })
+        ).onFailure().invoke(error -> {
+            System.err.println("更新账户状态失败: " + error.getMessage());
+            error.printStackTrace();
+        });
+    }
+
+    // 更新账户类型
+    public Uni<Account> updateUserType(Long id, Integer userType) {
+        return factory.withSession(session ->
+            session.find(Account.class, id)
+                .onItem().ifNull().failWith(() -> 
+                    new NoResultException("未找到ID为 " + id + " 的账户"))
+                .flatMap(account -> {
+                    account.setUserType(userType);
+                    return session.flush()
+                        .replaceWith(account);
+                })
+        ).onFailure().invoke(error -> {
+            System.err.println("更新账户类型失败: " + error.getMessage());
+            error.printStackTrace();
+        });
+    }
+
+    // 重置密码
+    public Uni<Boolean> resetPassword(Long id, String newPassword) {
+        return factory.withSession(session ->
+            session.find(Account.class, id)
+                .onItem().ifNull().failWith(() -> 
+                    new NoResultException("未找到ID为 " + id + " 的账户"))
+                .flatMap(account -> {
+                    account.setPassword(BCrypt.hashpw(newPassword, BCrypt.gensalt()));
+                    return session.flush()
+                        .replaceWith(true);
+                })
+        ).onFailure().invoke(error -> {
+            System.err.println("重置密码失败: " + error.getMessage());
+            error.printStackTrace();
+        });
+    }
+
+    // 搜索账户
+    public Uni<AccountPage> searchAccounts(String keyword, int page, int size) {
+        return factory.withSession(session -> {
+            String baseQuery = "FROM Account a WHERE " +
+                "LOWER(a.username) LIKE LOWER(:keyword) OR " +
+                "LOWER(a.email) LIKE LOWER(:keyword)";
+            
+            return session.createQuery("SELECT COUNT(a) " + baseQuery, Long.class)
+                .setParameter("keyword", "%" + keyword + "%")
+                .getSingleResult()
+                .chain(total -> {
+                    return session.createQuery(baseQuery, Account.class)
+                        .setParameter("keyword", "%" + keyword + "%")
+                        .setFirstResult((page - 1) * size)
+                        .setMaxResults(size)
+                        .getResultList()
+                        .map(accounts -> {
+                            int totalPages = (int) Math.ceil((double) total / size);
+                            PageInfo pageInfo = PageInfo.builder()
+                                .currentPage(page)
+                                .pageSize(size)
+                                .totalPages(totalPages)
+                                .totalElements(total.intValue())
+                                .hasNext(page < totalPages)
+                                .build();
+
+                            return AccountPage.builder()
+                                .content(accounts)
+                                .pageInfo(pageInfo)
+                                .build();
+                        });
+                });
+        }).onFailure().invoke(error -> {
+            System.err.println("搜索账户失败: " + error.getMessage());
+            error.printStackTrace();
+        });
+    }
 }

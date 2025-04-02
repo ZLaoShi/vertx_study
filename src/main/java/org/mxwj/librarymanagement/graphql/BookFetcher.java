@@ -7,6 +7,7 @@ import org.mxwj.librarymanagement.model.Book;
 import org.mxwj.librarymanagement.model.BooksPage;
 import org.mxwj.librarymanagement.model.dto.CreateBookDTO;
 import org.mxwj.librarymanagement.service.BookService;
+import org.mxwj.librarymanagement.utils.DTOMapper;
 
 import graphql.schema.DataFetcher;
 
@@ -44,25 +45,35 @@ public class BookFetcher {
         };
     }
 
-    //创建书籍
+    // //创建书籍
+    // public DataFetcher<CompletableFuture<Book>> createBook() {
+    //     return env -> {
+    //         Map<String, Object> input = env.getArgument("input");
+    //         CreateBookDTO createBookDTO = new CreateBookDTO();
+    //         createBookDTO.setIsbn((String) input.get("isbn"));
+    //         createBookDTO.setTitle((String) input.get("title"));
+    //         createBookDTO.setAuthor((String) input.get("author"));
+    //         createBookDTO.setPublisher((String) input.get("publisher"));
+    //         createBookDTO.setPublishDate((String) input.get("publishDate"));
+    //         createBookDTO.setCategory((String) input.get("category"));
+    //         createBookDTO.setDescription((String) input.get("description"));
+    //         createBookDTO.setTotalCopies((Integer) input.get("totalCopies"));
+    //         createBookDTO.setLocation((String) input.get("location"));
+
+    //     // 调用 service 层创建图书
+    //     return bookService.createBook(createBookDTO).subscribeAsCompletionStage();
+    //     };
+
+    // }
+
+    // 创建书籍
     public DataFetcher<CompletableFuture<Book>> createBook() {
         return env -> {
             Map<String, Object> input = env.getArgument("input");
-            CreateBookDTO createBookDTO = new CreateBookDTO();
-            createBookDTO.setIsbn((String) input.get("isbn"));
-            createBookDTO.setTitle((String) input.get("title"));
-            createBookDTO.setAuthor((String) input.get("author"));
-            createBookDTO.setPublisher((String) input.get("publisher"));
-            createBookDTO.setPublishDate((String) input.get("publishDate"));
-            createBookDTO.setCategory((String) input.get("category"));
-            createBookDTO.setDescription((String) input.get("description"));
-            createBookDTO.setTotalCopies((Integer) input.get("totalCopies"));
-            createBookDTO.setLocation((String) input.get("location"));
-
-        // 调用 service 层创建图书
-        return bookService.createBook(createBookDTO).subscribeAsCompletionStage();
+            CreateBookDTO createBookDTO = DTOMapper.mapToDTO(input, CreateBookDTO.class);
+            
+            return bookService.createBook(createBookDTO).subscribeAsCompletionStage();
         };
-
     }
     
     // 更新书籍

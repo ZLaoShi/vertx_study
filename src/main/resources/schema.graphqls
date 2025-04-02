@@ -8,10 +8,12 @@ type Query {
   books(page: Int = 1, size: Int = 10): BooksPage
   searchBooks(keyword: String!, page: Int = 1, size: Int = 10): BooksPage
 
-  # 查询用户的借阅记录
-  myBorrowRecords(page: Int = 1, size: Int = 10): BorrowRecordsPage
-  # 查询所有借阅记录(管理员)
-  borrowRecords(page: Int = 1, size: Int = 10): BorrowRecordsPage
+  myBorrowRecords(page: Int = 1, size: Int = 10): BorrowRecordsPage # 查询用户的借阅记录
+  borrowRecords(page: Int = 1, size: Int = 10): BorrowRecordsPage # 查询所有借阅记录(管理员)
+ 
+  account(id: ID!): Account  # 查询单个账户
+  accounts(page: Int = 1, size: Int = 10, orderBy: String = "id"): AccountPage # 分页查询账户列表
+  searchAccounts(keyword: String!, page: Int = 1, size: Int = 10): AccountPage # 搜索账户
 }
 
 type Mutation {
@@ -30,10 +32,12 @@ type Mutation {
   updateBook(id: ID!, input: CreateBookInput!): Book
   deleteBook(id: ID!): Boolean
 
-   # 借书
-  borrowBook(input: BorrowBookInput!): BorrowRecord
-  # 还书
-  returnBook(input: ReturnBookInput!): BorrowRecord
+  borrowBook(input: BorrowBookInput!): BorrowRecord 
+  returnBook(input: ReturnBookInput!): BorrowRecord 
+
+  updateAccountStatus(id: ID!, status: Int!): Account 
+  updateAccountType(id: ID!, userType: Int!): Account 
+  resetPassword(id: ID!, newPassword: String!): Boolean 
 }
 
 type LoginResponse {

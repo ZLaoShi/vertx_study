@@ -26,7 +26,7 @@ public class Account {
     private String email;
     
     @Column(name = "user_type")
-    private Short userType;     // 0:普通用户, 1:管理员
+    private Integer userType;     // 0:普通用户, 1:管理员
 
     @Column(name = "created_at")
     private OffsetDateTime createdAt;
@@ -34,5 +34,5 @@ public class Account {
     @Column(name = "last_login")
     private OffsetDateTime lastLogin;
     
-    private Short status;  // 1:正常, 0:禁用
+    private Integer status;  // 1:正常, 0:禁用
 }
