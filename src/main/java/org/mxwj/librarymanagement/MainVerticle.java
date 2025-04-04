@@ -124,7 +124,7 @@ public class MainVerticle extends AbstractVerticle {
 
                             )
                     .build();
-                    //TODO 管理员借阅管理模块
+                    
                 GraphQLSchema graphQLSchema = new SchemaGenerator()
                     .makeExecutableSchema(typeRegistry, runtimeWiring);
 

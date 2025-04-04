@@ -15,34 +15,63 @@ public class DTOMapper {
                 Object value = input.get(fieldName);
                 
                 if (value != null) {
-                    // 根据字段类型进行转换
-                    if (field.getType() == String.class) {
-                        field.set(dto, String.valueOf(value));
-                    } else if (field.getType() == Integer.class) {
-                        if (value instanceof String) {
-                            field.set(dto, Integer.valueOf((String) value));
-                        } else if (value instanceof Integer) {
-                            field.set(dto, value);
-                        }
-                    } else if (field.getType() == Long.class) {
-                        if (value instanceof String) {
-                            field.set(dto, Long.valueOf((String) value));
-                        } else if (value instanceof Integer) {
-                            field.set(dto, ((Integer) value).longValue());
-                        }
-                    } else if (field.getType() == Short.class) {
-                        if (value instanceof String) {
-                            field.set(dto, Short.valueOf((String) value));
-                        } else if (value instanceof Integer) {
-                            field.set(dto, ((Integer) value).shortValue());
-                        }
-                    }
-                    // 可以根据需要添加其他类型的转换
+                    setFieldValue(field, dto, value);
                 }
             }
             return dto;
         } catch (Exception e) {
             throw new RuntimeException("DTO映射失败", e);
+        }
+    }
+    
+    private static <T> void setFieldValue(Field field, T dto, Object value) throws IllegalAccessException {
+        Class<?> fieldType = field.getType();
+        
+        // 处理基本类型转换
+        switch (fieldType.getName()) {
+            case "java.lang.String":
+                field.set(dto, String.valueOf(value));
+                break;
+                
+            case "java.lang.Integer":
+                if (value instanceof String) {
+                    field.set(dto, Integer.valueOf((String) value));
+                } else if (value instanceof Integer) {
+                    field.set(dto, value);
+                }
+                break;
+                
+            case "java.lang.Long":
+                if (value instanceof String) {
+                    field.set(dto, Long.valueOf((String) value));
+                } else if (value instanceof Integer) {
+                    field.set(dto, ((Integer) value).longValue());
+                }
+                break;
+                
+            case "java.lang.Short":
+                if (value instanceof String) {
+                    field.set(dto, Short.valueOf((String) value));
+                } else if (value instanceof Integer) {
+                    field.set(dto, ((Integer) value).shortValue());
+                }
+                break;
+                
+            case "java.time.LocalDate":
+                if (value instanceof String) {
+                    field.set(dto, value);
+                }
+                break;
+                
+            case "java.time.OffsetDateTime":
+                if (value instanceof String) {
+                    field.set(dto, value);
+                }
+                break;
+                
+            default:
+                System.err.println("未处理的类型: " + fieldType.getName() + ", 字段: " + field.getName());
+                break;
         }
     }
 }

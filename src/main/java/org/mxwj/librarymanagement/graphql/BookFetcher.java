@@ -7,6 +7,7 @@ import org.mxwj.librarymanagement.model.Book;
 import org.mxwj.librarymanagement.model.BooksPage;
 import org.mxwj.librarymanagement.model.dto.CreateBookDTO;
 import org.mxwj.librarymanagement.service.BookService;
+import org.mxwj.librarymanagement.utils.DTOMapper;
 import org.mxwj.librarymanagement.utils.RequestDtoMapper;
 
 import graphql.schema.DataFetcher;
@@ -49,7 +50,7 @@ public class BookFetcher {
     public DataFetcher<CompletableFuture<Book>> createBook() {
         return env -> {
             Map<String, Object> input = env.getArgument("input");
-            CreateBookDTO createBookDTO = RequestDtoMapper.convertValue(input, CreateBookDTO.class);
+            CreateBookDTO createBookDTO = DTOMapper.mapToDTO(input, CreateBookDTO.class);
 
             return bookService.createBook(createBookDTO).subscribeAsCompletionStage();
         };
@@ -60,7 +61,7 @@ public class BookFetcher {
         return env -> {
             Long id = Long.parseLong(env.getArgument("id"));
             Map<String, Object> input = env.getArgument("input");
-            CreateBookDTO updateBookDTO = RequestDtoMapper.convertValue(input, CreateBookDTO.class);
+            CreateBookDTO updateBookDTO = DTOMapper.mapToDTO(input, CreateBookDTO.class);
 
             return bookService.updateBook(id, updateBookDTO).subscribeAsCompletionStage();
         };
