@@ -76,6 +76,7 @@ public class AccountService {
                     account.setPassword(BCrypt.hashpw(registerDTO.getPassword(), BCrypt.gensalt()));
                     account.setEmail(registerDTO.getEmail());
                     account.setCreatedAt(OffsetDateTime.now());
+                    account.setUserType((Integer) 0);
                     account.setStatus((Integer) 1);
 
                     return session.persist(account)

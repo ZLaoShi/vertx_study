@@ -33,6 +33,7 @@ public class Account {
     
     @Column(name = "last_login")
     private OffsetDateTime lastLogin;
-    
+   
+    @Column(name = "status")
     private Integer status;  // 1:正常, 0:禁用
 }

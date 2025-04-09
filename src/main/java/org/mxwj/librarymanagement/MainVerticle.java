@@ -27,6 +27,7 @@ import graphql.schema.idl.TypeDefinitionRegistry;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.graphql.GraphQLHandler;
@@ -82,7 +83,7 @@ public class MainVerticle extends AbstractVerticle {
                         builder
                             .dataFetcher("user", GraphQLAuthHandler.requireUser(userFetcher.getUserById()))
                             .dataFetcher("users", userFetcher.getUsers())
-
+                    
                             .dataFetcher("userInfo", userInfoFetcher.getUserInfoById())
 
                             .dataFetcher("book", bookFetcher.getBookById())
@@ -136,6 +137,22 @@ public class MainVerticle extends AbstractVerticle {
 
     private Future<Void> setupRouter(GraphQL graphQL) {
         Router router = Router.router(vertx);
+
+        // 添加CORS处理器
+        router.route().handler(context -> {
+            context.response()
+                .putHeader("Access-Control-Allow-Origin", "*")
+                .putHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+                .putHeader("Access-Control-Allow-Headers", "Content-Type, Authorization")
+                .putHeader("Access-Control-Allow-Credentials", "true");
+
+            if (context.request().method() == HttpMethod.OPTIONS) {
+                context.response().setStatusCode(204).end();
+            } else {
+                context.next();
+            }
+        });
+
         router.route().handler(BodyHandler.create());
         JWTUtils jwtUtils = new JWTUtils(vertx);
 
