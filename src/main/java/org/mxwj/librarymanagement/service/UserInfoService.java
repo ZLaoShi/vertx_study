@@ -19,12 +19,14 @@ public class UserInfoService {
         factory = DatabaseManager.getSessionFactory();
     }
 
-    public Uni<UserInfo> findById(Long id) {
+   public Uni<UserInfo> findById(Long accountId) {
         return factory.withSession(session ->
-            session.find(UserInfo.class, id)
+            session.createQuery("FROM UserInfo ui WHERE ui.account.id = :accountId", UserInfo.class)
+                .setParameter("accountId", accountId)
+                .getSingleResultOrNull()
         ).onFailure().invoke(error -> {
-               System.out.println("数据库查询错误: " + error.getMessage());
-               error.printStackTrace();
+            System.out.println("数据库查询错误: " + error.getMessage());
+            error.printStackTrace();
         });
     }
 

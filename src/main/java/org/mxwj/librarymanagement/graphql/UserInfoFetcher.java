@@ -32,6 +32,9 @@ public class UserInfoFetcher {
             Map<String, Object> input = env.getArgument("input");
             CreateUserInfoDTO userInfoDto = DTOMapper.mapToDTO(input, CreateUserInfoDTO.class);
 
+            Long accountId = ContextHelper.getAccountId(env);
+            userInfoDto.setAccountId(accountId);
+            
             return userInfoService.createUserInfo(userInfoDto).subscribeAsCompletionStage();
         };
     }
