@@ -18,10 +18,10 @@ public class BorrowRecord {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 关系：多条 BorrowRecord 对应一个 UserInfo
+    // 关系：多条 BorrowRecord 对应一个 Acconut
     @ManyToOne 
-    @JoinColumn(name = "user_id", nullable = false)
-    private UserInfo userInfo; // 引用您提供的 UserInfo 实体
+    @JoinColumn(name = "account_id", nullable = false)
+    private Account account; // 引用您提供的 UserInfo 实体
 
     // 关系：多条 BorrowRecord 对应一个 Book
     @ManyToOne 

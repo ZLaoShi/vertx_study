@@ -22,21 +22,21 @@ public class BorrowFetcher {
     public DataFetcher<CompletableFuture<BorrowRecord>> borrowBook() {
         return env -> {
             // 获取当前用户ID(已经过身份验证)
-            Long userId = ContextHelper.getAccountId(env);
+            Long accountId = ContextHelper.getAccountId(env);
             Map<String, Object> input = env.getArgument("input");
             Long bookId = Long.parseLong((String) input.get("bookId"));
             String remarks = (String) input.get("remarks");
 
-            return borrowService.borrowBook(userId, bookId, remarks)
+            return borrowService.borrowBook(accountId, bookId, remarks)
                 .subscribeAsCompletionStage();
         };
     }
 
-     // 还书
+    // 还书
     public DataFetcher<CompletableFuture<BorrowRecord>> returnBook() {
         return env -> {
             // 获取当前用户ID(已经过身份验证)
-            Long userId = ContextHelper.getAccountId(env);
+            Long accountId = ContextHelper.getAccountId(env);
             Map<String, Object> input = env.getArgument("input");
             Long recordId = Long.parseLong((String) input.get("recordId"));
             String remarks = (String) input.get("remarks");
@@ -47,7 +47,7 @@ public class BorrowFetcher {
                     new IllegalArgumentException("借阅记录不存在"))
                 .flatMap(record -> {
                     // 检查是否是本人的借阅记录
-                    if (!record.getUserInfo().getId().equals(userId)) {
+                    if (!record.getAccount().getId().equals(accountId)) {
                         return Uni.createFrom().failure(
                             new IllegalStateException("无权操作此借阅记录")
                         );
@@ -63,9 +63,9 @@ public class BorrowFetcher {
         return env -> {
             int page = env.getArgumentOrDefault("page", 1);
             int size = env.getArgumentOrDefault("size", 10);
-            Long userId = ContextHelper.getAccountId(env);
+            Long accountId = ContextHelper.getAccountId(env);
 
-            return borrowService.findUserBorrowRecords(userId, page, size)
+            return borrowService.findUserBorrowRecords(accountId, page, size)
                 .subscribeAsCompletionStage();
         };
     }
@@ -73,12 +73,12 @@ public class BorrowFetcher {
     // 管理员代替用户借书
     public DataFetcher<CompletableFuture<BorrowRecord>> adminBorrowBook() {
         return env -> {
-            Long userId = Long.parseLong(env.getArgument("userId"));
+            Long accountId = Long.parseLong(env.getArgument("userId"));
             Map<String, Object> input = env.getArgument("input");
             Long bookId = Long.parseLong((String) input.get("bookId"));
             String remarks = (String) input.get("remarks") + " (由管理员操作)";
 
-            return borrowService.borrowBook(userId, bookId, remarks)
+            return borrowService.borrowBook(accountId, bookId, remarks)
                 .subscribeAsCompletionStage();
         };
     }
@@ -86,7 +86,7 @@ public class BorrowFetcher {
     // 管理员代替用户还书
     public DataFetcher<CompletableFuture<BorrowRecord>> adminReturnBook() {
         return env -> {
-            Long userId = Long.parseLong(env.getArgument("userId"));
+            Long accountId = Long.parseLong(env.getArgument("userId"));
             Map<String, Object> input = env.getArgument("input");
             Long recordId = Long.parseLong((String) input.get("recordId"));
             String remarks = (String) input.get("remarks") + " (由管理员操作)";
@@ -97,7 +97,7 @@ public class BorrowFetcher {
                     new IllegalArgumentException("借阅记录不存在"))
                 .flatMap(record -> {
                     // 检查是否是目标用户的借阅记录
-                    if (!record.getUserInfo().getId().equals(userId)) {
+                    if (!record.getAccount().getId().equals(accountId)) {
                         return Uni.createFrom().failure(
                             new IllegalStateException("借阅记录与用户不匹配")
                         );

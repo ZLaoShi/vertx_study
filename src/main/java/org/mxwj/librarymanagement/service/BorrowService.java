@@ -3,11 +3,11 @@ package org.mxwj.librarymanagement.service;
 import java.time.OffsetDateTime;
 import org.hibernate.reactive.mutiny.Mutiny;
 import org.mxwj.librarymanagement.lib.DatabaseManager;
+import org.mxwj.librarymanagement.model.Account;
 import org.mxwj.librarymanagement.model.Book;
 import org.mxwj.librarymanagement.model.BorrowRecord;
 import org.mxwj.librarymanagement.model.BorrowRecordsPage;
 import org.mxwj.librarymanagement.model.PageInfo;
-import org.mxwj.librarymanagement.model.UserInfo;
 import io.smallrye.mutiny.Uni;
 
 public class BorrowService {
@@ -19,54 +19,63 @@ public class BorrowService {
     }
 
     // 借书
-    public Uni<BorrowRecord> borrowBook(Long userId, Long bookId, String remarks) {
+    public Uni<BorrowRecord> borrowBook(Long accountId, Long bookId, String remarks) {
         return factory.withTransaction((session, tx) -> 
-            // 1. 检查用户信息
-            session.find(UserInfo.class, userId)
+            // 1. 直接查找 Account
+            session.find(Account.class, accountId)
                 .onItem().ifNull().failWith(() -> 
-                    new IllegalArgumentException("用户信息不存在"))
-                .flatMap(userInfo -> {
-                    // 2. 检查用户借阅权限
+                    new IllegalArgumentException("账户不存在"))
+                .flatMap(account -> {
+                    // 2. 检查现有借阅数量
                     return session.createQuery(
                         "SELECT COUNT(br) FROM BorrowRecord br " +
-                        "WHERE br.userInfo = :userInfo AND br.status = 0", Long.class)
-                        .setParameter("userInfo", userInfo)
+                        "WHERE br.account.id = :accountId AND br.status = 0", Long.class)
+                        .setParameter("accountId", accountId)
                         .getSingleResult()
                         .flatMap(currentBorrowCount -> {
-                            if (currentBorrowCount >= userInfo.getMaxBorrowBooks()) {
-                                return Uni.createFrom().failure(
-                                    new IllegalStateException("超出最大借阅数量限制")
-                                );
-                            }
-                            
-                            // 3. 检查图书是否可借
-                            return session.find(Book.class, bookId)
-                                .onItem().ifNull().failWith(() -> 
-                                    new IllegalArgumentException("图书不存在"))
-                                .flatMap(book -> {
-                                    if (book.getAvailableCopies() <= 0) {
+                            // 3. 通过左连接查询用户最大可借数量
+                            return session.createQuery(
+                                "SELECT COALESCE(ui.maxBorrowBooks, 5) FROM Account a " +
+                                "LEFT JOIN UserInfo ui ON a.id = ui.account.id " +
+                                "WHERE a.id = :accountId", Integer.class)
+                                .setParameter("accountId", accountId)
+                                .getSingleResult()
+                                .flatMap(maxBorrowBooks -> {
+                                    if (currentBorrowCount >= maxBorrowBooks) {
                                         return Uni.createFrom().failure(
-                                            new IllegalStateException("图书已全部借出")
+                                            new IllegalStateException("超出最大借阅数量限制")
                                         );
                                     }
 
-                                    // 4. 创建借阅记录
-                                    BorrowRecord record = new BorrowRecord();
-                                    record.setUserInfo(userInfo);
-                                    record.setBook(book);
-                                    record.setBorrowDate(OffsetDateTime.now());
-                                    record.setDueDate(OffsetDateTime.now().plusDays(DEFAULT_BORROW_DAYS));
-                                    record.setStatus((short) 0);
-                                    record.setRemarks(remarks);
-                                    record.setCreatedAt(OffsetDateTime.now());
-                                    record.setUpdatedAt(OffsetDateTime.now());
+                                    // 4. 检查图书是否可借
+                                    return session.find(Book.class, bookId)
+                                        .onItem().ifNull().failWith(() -> 
+                                            new IllegalArgumentException("图书不存在"))
+                                        .flatMap(book -> {
+                                            if (book.getAvailableCopies() <= 0) {
+                                                return Uni.createFrom().failure(
+                                                    new IllegalStateException("图书已全部借出")
+                                                );
+                                            }
 
-                                    // 5. 更新图书可用数量
-                                    book.setAvailableCopies(book.getAvailableCopies() - 1);
+                                            // 5. 创建借阅记录
+                                            BorrowRecord record = new BorrowRecord();
+                                            record.setAccount(account);
+                                            record.setBook(book);
+                                            record.setBorrowDate(OffsetDateTime.now());
+                                            record.setDueDate(OffsetDateTime.now().plusDays(DEFAULT_BORROW_DAYS));
+                                            record.setStatus((short) 0);
+                                            record.setRemarks(remarks);
+                                            record.setCreatedAt(OffsetDateTime.now());
+                                            record.setUpdatedAt(OffsetDateTime.now());
 
-                                    return session.persist(record)
-                                        .chain(() -> session.flush())
-                                        .replaceWith(record);
+                                            // 6. 更新图书可用数量
+                                            book.setAvailableCopies(book.getAvailableCopies() - 1);
+
+                                            return session.persist(record)
+                                                .chain(() -> session.flush())
+                                                .replaceWith(record);
+                                        });
                                 });
                         });
                 })
@@ -75,6 +84,7 @@ public class BorrowService {
             error.printStackTrace();
         });
     }
+    //TODO 比起left jion或许更优雅的做法是改外键acconut_id字段绑定userinfo表中的acconut_id字段
 
     // 还书
     public Uni<BorrowRecord> returnBook(Long recordId, String remarks) {
@@ -111,42 +121,37 @@ public class BorrowService {
     }
 
     // 查询用户的借阅记录
-    public Uni<BorrowRecordsPage> findUserBorrowRecords(Long userId, int page, int size) {
-        return factory.withSession(session -> 
-            session.find(UserInfo.class, userId)
-                .onItem().ifNull().failWith(() -> 
-                    new IllegalArgumentException("用户不存在"))
-                .flatMap(userInfo -> {
-                    String countQuery = "SELECT COUNT(br) FROM BorrowRecord br WHERE br.userInfo = :userInfo";
-                    String listQuery = "FROM BorrowRecord br WHERE br.userInfo = :userInfo ORDER BY br.createdAt DESC";
-
-                    return session.createQuery(countQuery, Long.class)
-                        .setParameter("userInfo", userInfo)
-                        .getSingleResult()
-                        .flatMap(total -> 
-                            session.createQuery(listQuery, BorrowRecord.class)
-                                .setParameter("userInfo", userInfo)
-                                .setFirstResult((page - 1) * size)
-                                .setMaxResults(size)
-                                .getResultList()
-                                .map(records -> {
-                                    int totalPages = (int) Math.ceil((double) total / size);
-                                    PageInfo pageInfo = PageInfo.builder()
-                                        .currentPage(page)
-                                        .pageSize(size)
-                                        .totalPages(totalPages)
-                                        .totalElements(total.intValue())
-                                        .hasNext(page < totalPages)
-                                        .build();
-
-                                    return BorrowRecordsPage.builder()
-                                        .content(records)
-                                        .pageInfo(pageInfo)
-                                        .build();
-                                })
-                        );
-                })
-        ).onFailure().invoke(error -> {
+    public Uni<BorrowRecordsPage> findUserBorrowRecords(Long accountId, int page, int size) {
+        return factory.withSession(session -> {
+            String countQuery = "SELECT COUNT(br) FROM BorrowRecord br WHERE br.account.id = :accountId";
+            String listQuery = "FROM BorrowRecord br WHERE br.account.id = :accountId ORDER BY br.createdAt DESC";
+    
+            return session.createQuery(countQuery, Long.class)
+                .setParameter("accountId", accountId)
+                .getSingleResult()
+                .flatMap(total -> 
+                    session.createQuery(listQuery, BorrowRecord.class)
+                        .setParameter("accountId", accountId)
+                        .setFirstResult((page - 1) * size)
+                        .setMaxResults(size)
+                        .getResultList()
+                        .map(records -> {
+                            int totalPages = (int) Math.ceil((double) total / size);
+                            PageInfo pageInfo = PageInfo.builder()
+                                .currentPage(page)
+                                .pageSize(size)
+                                .totalPages(totalPages)
+                                .totalElements(total.intValue())
+                                .hasNext(page < totalPages)
+                                .build();
+    
+                            return BorrowRecordsPage.builder()
+                                .content(records)
+                                .pageInfo(pageInfo)
+                                .build();
+                        })
+                );
+        }).onFailure().invoke(error -> {
             System.err.println("查询借阅记录失败: " + error.getMessage());
             error.printStackTrace();
         });
