@@ -199,30 +199,6 @@ public class MainVerticle extends AbstractVerticle {
                 context.next();
             }
         }); //TODO 第一次启动后如果输入一个不存在的token会导致服务器错误
-        // router.route("/graphql").handler(context -> {
-        //     String authHeader = context.request().getHeader("Authorization");
-        //     if (authHeader != null && authHeader.startsWith("Bearer ")) {
-        //         String token = authHeader.substring(7);
-
-        //         jwtUtils.validateToken(token)
-        //             .onSuccess(user -> {
-        //                 // 将用户信息存储在 RoutingContext 中
-        //                 context.put("userPrincipal", user.principal());
-
-        //                 System.out.printf("Current Date and Time (UTC): %s%n",
-        //                     LocalDateTime.now(ZoneOffset.UTC).format(
-        //                         DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-        //                     ));
-        //                 System.out.printf("Current User's Login: %s%n",
-        //                     user.principal().getString("sub"));
-
-        //                 context.next();
-        //             })
-        //             .onFailure(err -> context.fail(401));
-        //     } else {
-        //         context.next();
-        //     }
-        // });
 
         GraphQLHandler graphQLHandler = GraphQLHandler.create(graphQL,
             new GraphQLHandlerOptions()
