@@ -169,7 +169,82 @@ public class BorrowService {
         });
     }
 
-    // 查询所有借阅记录(管理员)
+    // 查询所有借阅记录(管理员)，支持筛选和搜索
+    public Uni<BorrowRecordsPage> findAllBorrowRecords(int page, int size, int status, String keyword) {
+        return factory.withSession(session -> {
+            StringBuilder queryBuilder = new StringBuilder("FROM BorrowRecord br");
+            StringBuilder countBuilder = new StringBuilder("SELECT COUNT(br) FROM BorrowRecord br");
+            StringBuilder whereClause = new StringBuilder();
+            
+            // 添加状态筛选
+            if (status >= 0) {
+                whereClause.append(" WHERE br.status = :status");
+            }
+            
+            // 添加关键字搜索
+            if (!keyword.trim().isEmpty()) {
+                // 如果已经有WHERE子句，则使用AND连接，否则使用WHERE
+                if (whereClause.length() > 0) {
+                    whereClause.append(" AND");
+                } else {
+                    whereClause.append(" WHERE");
+                }
+                
+                // 搜索书名或用户名包含关键字的记录
+                whereClause.append(" (LOWER(br.book.title) LIKE :keyword OR")
+                        .append(" LOWER(br.book.author) LIKE :keyword OR")
+                        .append(" LOWER(br.account.username) LIKE :keyword)");
+            }
+            
+            // 将WHERE子句添加到查询中
+            String countQuery = countBuilder.append(whereClause).toString();
+            String listQuery = queryBuilder.append(whereClause).append(" ORDER BY br.createdAt DESC").toString();
+            
+            // 构建查询
+            var countQ = session.createQuery(countQuery, Long.class);
+            var listQ = session.createQuery(listQuery, BorrowRecord.class);
+            
+            // 设置参数
+            if (status >= 0) {
+                countQ.setParameter("status", (short)status);
+                listQ.setParameter("status", (short)status);
+            }
+            
+            if (!keyword.trim().isEmpty()) {
+                String keywordParam = "%" + keyword.toLowerCase() + "%";
+                countQ.setParameter("keyword", keywordParam);
+                listQ.setParameter("keyword", keywordParam);
+            }
+            
+            // 执行查询
+            return countQ.getSingleResult()
+                .flatMap(total -> 
+                    listQ.setFirstResult((page - 1) * size)
+                        .setMaxResults(size)
+                        .getResultList()
+                        .map(records -> {
+                            int totalPages = (int) Math.ceil((double) total / size);
+                            PageInfo pageInfo = PageInfo.builder()
+                                .currentPage(page)
+                                .pageSize(size)
+                                .totalPages(totalPages)
+                                .totalElements(total.intValue())
+                                .hasNext(page < totalPages)
+                                .build();
+    
+                            return BorrowRecordsPage.builder()
+                                .content(records)
+                                .pageInfo(pageInfo)
+                                .build();
+                        })
+                );
+        }).onFailure().invoke(error -> {
+            System.err.println("查询所有借阅记录失败: " + error.getMessage());
+            error.printStackTrace();
+        });
+    }
+
+    // 查询所有借阅记录(管理员),仅分页
     public Uni<BorrowRecordsPage> findAllBorrowRecords(int page, int size) {
         return factory.withSession(session -> {
             String countQuery = "SELECT COUNT(br) FROM BorrowRecord br";

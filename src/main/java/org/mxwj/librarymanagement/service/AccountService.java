@@ -61,6 +61,7 @@ public class AccountService {
                 });
         });
     }
+    // 登录时未检测账户是否被禁用
 
     public Uni<Account> register(RegisterDTO registerDTO) {
         return factory.withSession(session -> {

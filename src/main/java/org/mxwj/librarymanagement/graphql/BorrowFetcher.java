@@ -125,8 +125,10 @@ public class BorrowFetcher {
         return env -> {
             int page = env.getArgumentOrDefault("page", 1);
             int size = env.getArgumentOrDefault("size", 10);
-
-            return borrowService.findAllBorrowRecords(page, size)
+            int status = env.getArgumentOrDefault("status", -1);   // -1表示全部状态
+            String keyword = env.getArgumentOrDefault("keyword", "");  // 关键字搜索
+            
+            return borrowService.findAllBorrowRecords(page, size, status, keyword)
                 .subscribeAsCompletionStage();
         };
     }

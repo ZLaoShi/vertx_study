@@ -9,7 +9,7 @@ type Query {
   searchBooks(keyword: String!, page: Int = 1, size: Int = 10): BooksPage
 
   myBorrowRecords(page: Int = 1, size: Int = 10): BorrowRecordsPage # 查询用户的借阅记录
-  borrowRecords(page: Int = 1, size: Int = 10): BorrowRecordsPage # 查询所有借阅记录(管理员)
+  borrowRecords(page: Int = 1, size: Int = 10, status: Int = -1, keyword: String = ""): BorrowRecordsPage # 查询所有借阅记录(管理员)
  
   account(id: ID!): Account  # 查询单个账户
   accounts(page: Int = 1, size: Int = 10, orderBy: String = "id"): AccountPage # 分页查询账户列表
@@ -125,7 +125,6 @@ type BooksPage {
 
 type BorrowRecord {
   id: ID!
-  userInfo: UserInfo!
   book: Book!
   borrowDate: String!
   dueDate: String!

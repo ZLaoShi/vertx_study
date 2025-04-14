@@ -21,7 +21,7 @@ public class BorrowRecord {
     // 关系：多条 BorrowRecord 对应一个 Acconut
     @ManyToOne 
     @JoinColumn(name = "account_id", nullable = false)
-    private Account account; // 引用您提供的 UserInfo 实体
+    private Account account; 
 
     // 关系：多条 BorrowRecord 对应一个 Book
     @ManyToOne 

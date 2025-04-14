@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
+
 import org.mxwj.librarymanagement.graphql.AccountFetcher;
 import org.mxwj.librarymanagement.graphql.AuthFetcher;
 import org.mxwj.librarymanagement.graphql.BookFetcher;
@@ -17,6 +18,8 @@ import org.mxwj.librarymanagement.service.BorrowService;
 import org.mxwj.librarymanagement.service.UserInfoService;
 import org.mxwj.librarymanagement.service.UserService;
 import org.mxwj.librarymanagement.utils.JWTUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import graphql.GraphQL;
 import graphql.schema.GraphQLSchema;
@@ -37,6 +40,8 @@ import io.vertx.ext.web.handler.graphql.GraphiQLHandlerOptions;
 import io.vertx.ext.web.handler.graphql.instrumentation.JsonObjectAdapter;
 
 public class MainVerticle extends AbstractVerticle {
+    private static final Logger logger = LoggerFactory.getLogger(MainVerticle.class);
+
     private UserService userService;
     private AccountService accountService;
     private UserInfoService userInfoService;
@@ -45,6 +50,8 @@ public class MainVerticle extends AbstractVerticle {
 
     @Override
     public void start(Promise<Void> startPromise) {
+        logger.info("正在启动应用");
+
         initializeUserService()
             .compose(this::setupGraphQL)
             .compose(this::setupRouter)
@@ -71,7 +78,6 @@ public class MainVerticle extends AbstractVerticle {
                 SchemaParser schemaParser = new SchemaParser();
                 TypeDefinitionRegistry typeRegistry = schemaParser.parse(schema);
 
-                UserFetcher userFetcher = new UserFetcher(userService);
                 AuthFetcher authFetcher = new AuthFetcher(accountService);
                 UserInfoFetcher userInfoFetcher = new UserInfoFetcher(userInfoService);
                 BookFetcher bookFetcher = new BookFetcher(bookService);
@@ -81,11 +87,6 @@ public class MainVerticle extends AbstractVerticle {
                 RuntimeWiring runtimeWiring = RuntimeWiring.newRuntimeWiring()
                     .type("Query", builder ->
                         builder
-                            .dataFetcher("user", GraphQLAuthHandler.requireUser(userFetcher.getUserById()))
-                            .dataFetcher("users", userFetcher.getUsers())
-                    
-                            .dataFetcher("userInfo", userInfoFetcher.getUserInfoById())
-
                             .dataFetcher("book", bookFetcher.getBookById())
                             .dataFetcher("books", bookFetcher.getBooks())
                             .dataFetcher("searchBooks", bookFetcher.searchBooks())
@@ -162,7 +163,8 @@ public class MainVerticle extends AbstractVerticle {
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 String token = authHeader.substring(7);
 
-                jwtUtils.validateToken(token)
+                try {
+                    jwtUtils.validateToken(token)
                     .onSuccess(user -> {
                         // 将用户信息存储在 RoutingContext 中
                         context.put("userPrincipal", user.principal());
@@ -173,14 +175,54 @@ public class MainVerticle extends AbstractVerticle {
                             ));
                         System.out.printf("Current User's Login: %s%n",
                             user.principal().getString("sub"));
-
+                            
                         context.next();
                     })
-                    .onFailure(err -> context.fail(401));
+                    .onFailure(err -> {
+                        System.err.println("JWT验证失败: " + err.getMessage());
+                        // 返回401状态码和错误信息，而不是直接调用context.fail()
+                        context.response()
+                            .setStatusCode(401)
+                            .putHeader("Content-Type", "application/json")
+                            .end("{\"error\": \"Unauthorized\", \"message\": \"Invalid or expired token\"}");
+                    });
+                } catch(Exception e) {
+                    System.err.println("处理JWT过程中发生异常: " + e.getMessage());
+                    e.printStackTrace();
+                    // 捕获所有可能的异常
+                    context.response()
+                        .setStatusCode(401)
+                        .putHeader("Content-Type", "application/json")
+                        .end("{\"error\": \"Unauthorized\", \"message\": \"Invalid token format\"}");
+                        }
             } else {
                 context.next();
             }
         }); //TODO 第一次启动后如果输入一个不存在的token会导致服务器错误
+        // router.route("/graphql").handler(context -> {
+        //     String authHeader = context.request().getHeader("Authorization");
+        //     if (authHeader != null && authHeader.startsWith("Bearer ")) {
+        //         String token = authHeader.substring(7);
+
+        //         jwtUtils.validateToken(token)
+        //             .onSuccess(user -> {
+        //                 // 将用户信息存储在 RoutingContext 中
+        //                 context.put("userPrincipal", user.principal());
+
+        //                 System.out.printf("Current Date and Time (UTC): %s%n",
+        //                     LocalDateTime.now(ZoneOffset.UTC).format(
+        //                         DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+        //                     ));
+        //                 System.out.printf("Current User's Login: %s%n",
+        //                     user.principal().getString("sub"));
+
+        //                 context.next();
+        //             })
+        //             .onFailure(err -> context.fail(401));
+        //     } else {
+        //         context.next();
+        //     }
+        // });
 
         GraphQLHandler graphQLHandler = GraphQLHandler.create(graphQL,
             new GraphQLHandlerOptions()
@@ -204,3 +246,4 @@ public class MainVerticle extends AbstractVerticle {
             });
     }
 }
+//TODO 添加全局的日志
